@@ -1,0 +1,18 @@
+{
+    "name": "Esperecyan.UniVRMExtensions",
+    "references": [
+        "GUID:05dd262a0c0a2f841b8252c8c3815582",
+        "GUID:8d76e605759c3f64a957d63ef96ada7c"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
