@@ -61,6 +61,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1314261227135839417}
     m_Modifications:
     - target: {fileID: 4438593960874954496, guid: c0d008e23161282b39199515fa2c0da4, type: 3}
@@ -132,6 +133,7 @@ PrefabInstance:
       value: 0.8509804
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c0d008e23161282b39199515fa2c0da4, type: 3}
 --- !u!114 &5789786791031881256 stripped
 MonoBehaviour:
@@ -154,6 +156,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1314261227135839417}
     m_Modifications:
     - target: {fileID: 4366494465079868236, guid: f0ce15b9d7f5f910fa2e3ddc2ea6d890, type: 3}
@@ -257,6 +260,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: f0ce15b9d7f5f910fa2e3ddc2ea6d890, type: 3}
 --- !u!4 &6230533819516583250 stripped
 Transform:
@@ -268,6 +272,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1314261227135839417}
     m_Modifications:
     - target: {fileID: 1915238444563462410, guid: 4418f6a92856c5b51b58a36e3be7ed5c, type: 3}
@@ -347,6 +352,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 4418f6a92856c5b51b58a36e3be7ed5c, type: 3}
 --- !u!4 &624164888610552290 stripped
 Transform:
@@ -369,6 +375,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1314261227135839417}
     m_Modifications:
     - target: {fileID: 4724242833946851652, guid: b420c3106bd9cc5b6871a7df5459dba0, type: 3}
@@ -420,6 +427,7 @@ PrefabInstance:
       value: Left HandLandmarkList Annotation
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: b420c3106bd9cc5b6871a7df5459dba0, type: 3}
 --- !u!4 &6031111879974362046 stripped
 Transform:
@@ -442,6 +450,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1314261227135839417}
     m_Modifications:
     - target: {fileID: 4724242833946851652, guid: b420c3106bd9cc5b6871a7df5459dba0, type: 3}
@@ -493,6 +502,7 @@ PrefabInstance:
       value: Right HandLandmarkList Annotation
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: b420c3106bd9cc5b6871a7df5459dba0, type: 3}
 --- !u!4 &6031111878222070829 stripped
 Transform:
@@ -515,6 +525,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1314261227135839417}
     m_Modifications:
     - target: {fileID: 4366494465079868236, guid: f0ce15b9d7f5f910fa2e3ddc2ea6d890, type: 3}
@@ -614,6 +625,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: f0ce15b9d7f5f910fa2e3ddc2ea6d890, type: 3}
 --- !u!4 &6230533820724736947 stripped
 Transform:
@@ -625,6 +637,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1314261227135839417}
     m_Modifications:
     - target: {fileID: 745748194542674601, guid: c97d04632e9be1a7cb05f6ab855b365b, type: 3}
@@ -700,6 +713,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c97d04632e9be1a7cb05f6ab855b365b, type: 3}
 --- !u!4 &1757634858630965815 stripped
 Transform:

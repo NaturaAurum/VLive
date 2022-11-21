@@ -1,0 +1,62 @@
+using UnityEngine;
+namespace VLive.Runtime
+{
+    public class JointKalmanFilter
+    {
+        private readonly DiscreteKalmanFilter<ConstantVelocity3DModel, JointPoint> _kalmanFilter;
+        private int _effectiveCount;
+        private const int StartCount = 50;
+
+        public JointKalmanFilter(double timeInterval, double noise)
+        {
+            _kalmanFilter = new DiscreteKalmanFilter<ConstantVelocity3DModel, JointPoint>(
+                new ConstantVelocity3DModel()
+                {
+                    Position = Vector3.zero,
+                    Velocity = Vector3.zero
+                },
+                ConstantVelocity3DModel.GetProcessNoise(noise, timeInterval),
+                3,
+                0,
+                ConstantVelocity3DModel.ToArray,
+                ConstantVelocity3DModel.FromArray,
+                joint => new double[]
+                {
+                    joint.Now3D.x,
+                    joint.Now3D.y,
+                    joint.Now3D.z
+                }
+            );
+
+            _kalmanFilter.ProcessNoise = ConstantVelocity3DModel.GetProcessNoise(noise, timeInterval);
+            _kalmanFilter.MeasurementNoise = MatrixFunctions.Diagonal(_kalmanFilter.MeasurementVectorDimension, 1.0);
+            _kalmanFilter.MeasurementMatrix = ConstantVelocity3DModel.GetPositionMeasurementMatrix();
+            _kalmanFilter.TransitionMatrix = ConstantVelocity3DModel.GetTransitionMatrix(timeInterval);
+            _kalmanFilter.Predict();
+        }
+
+        public void UpdateFilterParameter(double timeInterval, double noise)
+        {
+            _kalmanFilter.ProcessNoise = ConstantVelocity3DModel.GetProcessNoise(noise, timeInterval);
+            _kalmanFilter.TransitionMatrix = ConstantVelocity3DModel.GetTransitionMatrix(timeInterval);
+            _effectiveCount = 0;
+        }
+
+        public void Correct(JointPoint jointPoint) => _kalmanFilter.Correct(jointPoint);
+        public void Predict() => _kalmanFilter.Predict();
+        public Vector3 GetPosition() => _kalmanFilter.State.Position;
+
+        public Vector3 CorrectAndPredict(JointPoint jointPoint)
+        {
+            Correct(jointPoint);
+            Predict();
+            if (_effectiveCount >= 50)
+            {
+                return GetPosition();
+            }
+
+            ++_effectiveCount;
+            return jointPoint.Now3D;
+        }
+    }
+}
