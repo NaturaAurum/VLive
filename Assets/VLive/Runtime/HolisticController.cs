@@ -39,6 +39,7 @@ namespace VLive.Runtime
         private ImageSourceType imageSourceType;
         [SerializeField]
         private HolisticReceiver receiver;
+        [SerializeField] private HolisticLandmarkListAnnotationController holisticAnnotationController;
 
         private TextureFramePool _textureFramePool;
         private HolisticTrackingGraph _holisticGraphRunner;
@@ -139,6 +140,7 @@ namespace VLive.Runtime
         private void OnPoseLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _poseLandmarks = e.value;
+            holisticAnnotationController.DrawPoseLandmarkListLater(e.value);
         }
         private void OnPoseWorldLandmarks(object sender, OutputEventArgs<LandmarkList> e)
         {
@@ -147,14 +149,17 @@ namespace VLive.Runtime
         private void OnRightHandLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _rightHandLandmarks = e.value;
+            holisticAnnotationController.DrawRightHandLandmarkListLater(e.value);
         }
         private void OnLeftHandLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _leftHandLandmarks = e.value;
+            holisticAnnotationController.DrawLeftHandLandmarkListLater(e.value);
         }
         private void OnFaceLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _faceLandmarks = e.value;
+            holisticAnnotationController.DrawFaceLandmarkListLater(e.value);
         }
 
         private void ReadFromImageSource(TextureFrame textureFrame)
@@ -212,15 +217,15 @@ namespace VLive.Runtime
                 var pose3D = _poseWorldLandmarks.Landmark;
 
                 var pose2 = pose2D.ToVector3List(_screenRect);
-                var pose3 = pose3D.ToVector3List(_screenRect, 1);
+                var pose3 = pose3D.ToVector3List(_screenRect, 1.1f);
                 _poseData.NewPosList = pose2.Select((point, index) =>
                 {
                     var point2D = point.Point;
                     var point3D = pose3[index].Point;
-                    point2D = Vector3.Scale(point2D, Vector3.one * 0.02f);
+                    point2D = Vector3.Scale(point2D, Vector3.one * 0.01f);
                     point2D.z = point3D.z;
-                    point2D.y += 2.7f;
-                    point2D.x -= 2.4f;
+                    point2D.y += 5.7f;
+                    // point2D.x -= 2.4f;
                     point.Point = point2D;
                     return point;
                 }).ToList();
@@ -260,7 +265,6 @@ namespace VLive.Runtime
             {
                 _faceData.PosList.Clear();
             }
-            
             receiver.SolvePose(_poseData);
             receiver.SolveHand(_handsData);
             receiver.SolveFace(_faceData);

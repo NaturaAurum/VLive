@@ -15,7 +15,7 @@ namespace VLive.Runtime
         
     }
 
-    public interface IHandSolver : ISolver<HandsData>
+    public interface IHandsSolver : ISolver<HandsData>
     {
         
     }

@@ -7,7 +7,7 @@ namespace VLive.Runtime
     {
         private IPoseSolver _poseSolver;
         private IFaceSolver _faceSolver;
-        private IHandSolver _handSolver;
+        private IHandsSolver _handsSolver;
 
         [SerializeField]
         private GameObject[] models;
@@ -27,7 +27,7 @@ namespace VLive.Runtime
             model.SetActive(true);
             _poseSolver = model.GetComponent<IPoseSolver>();
             _faceSolver = model.GetComponent<IFaceSolver>();
-            _handSolver = model.GetComponent<IHandSolver>();
+            _handsSolver = model.GetComponent<IHandsSolver>();
 
             _currIndex = index;
         }
@@ -53,7 +53,7 @@ namespace VLive.Runtime
 
         public void SolveHand(HandsData handsData)
         {
-            _handSolver?.Solve(handsData);
+            _handsSolver?.Solve(handsData);
         }
     }
 }

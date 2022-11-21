@@ -27,10 +27,10 @@ namespace VLive.Runtime
         
         private const double KalmanTimeInterval = 0.45;
         private const double KalmanNoise = 0.4;
-        private const float MinCutOffValue = 3f;
+        private const float MinCutOffValue = 1.5f;
         private const float DCutOffValue = 1f;
         private const float Beta = 0.1f;
-        private const float Frequency = 140f;
+        private const float Frequency = 90f;
         
         private Vector3 _leftUpperForward;
         private Vector3 _leftLowerForward;
@@ -135,23 +135,23 @@ namespace VLive.Runtime
             //AddSkeleton(PositionIndex.lEye, PositionIndex.Nose);
             //AddSkeleton(PositionIndex.rEar, PositionIndex.rEye);
             //AddSkeleton(PositionIndex.rEye, PositionIndex.Nose);
-            // AddSkeleton(_jointPointDict[JointIndex.LeftEar.Int()], _jointPointDict[JointIndex.Nose.Int()]);
-            // AddSkeleton(_jointPointDict[JointIndex.RightEar.Int()], _jointPointDict[JointIndex.Nose.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.LeftEar.Int()], _jointPointDict[JointIndex.Nose.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.RightEar.Int()], _jointPointDict[JointIndex.Nose.Int()]);
 
             // Right Leg
-            // AddSkeleton(_jointPointDict[JointIndex.RightThigh.Int()], _jointPointDict[JointIndex.RightShin.Int()]);
-            // AddSkeleton(_jointPointDict[JointIndex.RightShin.Int()], _jointPointDict[JointIndex.RightFoot.Int()]);
-            // AddSkeleton(_jointPointDict[JointIndex.RightFoot.Int()], _jointPointDict[JointIndex.RightToe.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.RightThigh.Int()], _jointPointDict[JointIndex.RightShin.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.RightShin.Int()], _jointPointDict[JointIndex.RightFoot.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.RightFoot.Int()], _jointPointDict[JointIndex.RightToe.Int()]);
             //
             // // Left Leg
-            // AddSkeleton(_jointPointDict[JointIndex.LeftThigh.Int()], _jointPointDict[JointIndex.LeftShin.Int()]);
-            // AddSkeleton(_jointPointDict[JointIndex.LeftShin.Int()], _jointPointDict[JointIndex.LeftFoot.Int()]);
-            // AddSkeleton(_jointPointDict[JointIndex.LeftFoot.Int()], _jointPointDict[JointIndex.LeftToe.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.LeftThigh.Int()], _jointPointDict[JointIndex.LeftShin.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.LeftShin.Int()], _jointPointDict[JointIndex.LeftFoot.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.LeftFoot.Int()], _jointPointDict[JointIndex.LeftToe.Int()]);
 
             // etc
-            // AddSkeleton(_jointPointDict[JointIndex.Spine.Int()], _jointPointDict[JointIndex.Neck.Int()]);
-            // AddSkeleton(_jointPointDict[JointIndex.Neck.Int()], _jointPointDict[JointIndex.Head.Int()]);
-            // AddSkeleton(_jointPointDict[JointIndex.Head.Int()], _jointPointDict[JointIndex.Nose.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.Spine.Int()], _jointPointDict[JointIndex.Neck.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.Neck.Int()], _jointPointDict[JointIndex.Head.Int()]);
+            AddSkeleton(_jointPointDict[JointIndex.Head.Int()], _jointPointDict[JointIndex.Nose.Int()]);
             AddSkeleton(_jointPointDict[JointIndex.Neck.Int()], _jointPointDict[JointIndex.RightUpperArm.Int()]);
             AddSkeleton(_jointPointDict[JointIndex.Neck.Int()], _jointPointDict[JointIndex.LeftUpperArm.Int()]);
             AddSkeleton(_jointPointDict[JointIndex.RightThigh.Int()], _jointPointDict[JointIndex.RightUpperArm.Int()]);
@@ -200,9 +200,9 @@ namespace VLive.Runtime
             hip.Inverse = Quaternion.Inverse(Quaternion.LookRotation(-forward));
             hip.InverseRotation = hip.Inverse * hip.InitRotation;
 
-            // var head = _jointPointDict[JointIndex.Head.Int()];
-            // var headPosition = head.Transform.position;
-            // // _initHeadPos = headPosition;
+            var head = _jointPointDict[JointIndex.Head.Int()];
+            var headPosition = head.Transform.position;
+            // _initHeadPos = headPosition;
             // head.InitRotation = head.Transform.rotation;
             // var forward2 = _jointPointDict[JointIndex.Nose.Int()].Transform.position - headPosition;
             // head.Inverse = Quaternion.Inverse(Quaternion.LookRotation(forward2));
@@ -345,8 +345,8 @@ namespace VLive.Runtime
         {
             foreach (var skeleton in _skeletons)
             {
-                skeleton.Line.SetPosition(0, skeleton.Start.Pos3D + Vector3.right);
-                skeleton.Line.SetPosition(1, skeleton.End.Pos3D + Vector3.right);
+                skeleton.Line.SetPosition(0, skeleton.Start.Now3D);
+                skeleton.Line.SetPosition(1, skeleton.End.Now3D);
             }
         }
         
@@ -383,10 +383,10 @@ namespace VLive.Runtime
             var rightLowerVec = Vector3.Cross(forwardLowerVec, downVec);
             var rightAngle = Vector3.Angle(rightUpperVec, rightLowerVec);
             var bodyAngle = Vector3.Angle(upperVec, downVec);
-            // hip.Transform.rotation = Quaternion.LookRotation(forwardLowerVec, -downVec) * hip.InverseRotation;
+            hip.Transform.rotation = Quaternion.LookRotation(forwardLowerVec, -downVec) * hip.InverseRotation;
 
             // rightAngle < 100.0f
-            if (bodyAngle > 10.0f)
+            if (bodyAngle > 10.0f && rightAngle < 100f)
             {
                 var chest = _jointPointDict[JointIndex.Chest.Int()];
                 if (chest.Enabled)
@@ -394,20 +394,6 @@ namespace VLive.Runtime
                     LookAt(JointIndex.Spine, JointIndex.Chest, forwardUpperVec);
                     LookAt(JointIndex.Chest, JointIndex.Neck, forwardUpperVec);
                 }
-
-                // var faceForward = TriangleNormalPos(JointIndex.Nose, JointIndex.RightEar, JointIndex.LeftEar);
-                // var spineToNeck = _jointPointDict[JointIndex.Neck.Int()].Pos3D -
-                //                   _jointPointDict[JointIndex.AbdomenUpper.Int()].Pos3D;
-                // if (Vector3.Angle(faceForward, upperVec) < 45.0f)
-                // {
-                //     LookAt(JointIndex.Neck, JointIndex.Head, forwardUpperVec);
-                //     var head = _jointPointDict[JointIndex.Head.Int()];
-                //     var headDir = _jointPointDict[JointIndex.Nose.Int()].Pos3D - head.Pos3D;
-                //     if (Vector3.Angle(headDir, forwardUpperVec) < 60.0f)
-                //     {
-                //         head.Transform.rotation = Quaternion.LookRotation(headDir, faceForward) * head.InverseRotation;
-                //     }
-                //}
 
                 UpdateArmJoints(JointIndex.LeftUpperArm, JointIndex.LeftLowerArm, JointIndex.LeftHand,
                                 JointIndex.LeftShoulder, JointIndex.LeftThumb2, JointIndex.LeftMid1, forwardUpperVec,
@@ -417,15 +403,10 @@ namespace VLive.Runtime
                                 ref _rightUpperForward, ref _rightLowerForward);
             }
 
-            // UpdateLegJoints(JointIndex.LeftThigh, JointIndex.LeftShin, JointIndex.LeftFoot, JointIndex.LeftToe,
-            //     rightLowerVec, forwardLowerVec);
-            // UpdateLegJoints(JointIndex.RightThigh, JointIndex.RightShin, JointIndex.RightFoot, JointIndex.RightToe,
-            //     rightLowerVec, forwardLowerVec);
-            
-            // var hipPos = hip.Transform.position;
-            // hipPos.y = hip.Pos3D.y - 0.15f;
-            // hip.Transform.position = hipPos;;
-            // hip.Transform.position = hip.Pos3D;
+            UpdateLegJoints(JointIndex.LeftThigh, JointIndex.LeftShin, JointIndex.LeftFoot, JointIndex.LeftToe,
+                rightLowerVec, forwardLowerVec);
+            UpdateLegJoints(JointIndex.RightThigh, JointIndex.RightShin, JointIndex.RightFoot, JointIndex.RightToe,
+                rightLowerVec, forwardLowerVec);
         }
         
         private void UpdateArmJoints(JointIndex upper, JointIndex lower, JointIndex hand, JointIndex thumb,
@@ -478,7 +459,7 @@ namespace VLive.Runtime
                     }
                 }
 
-                LookAt(hand, mid, normal);
+                // LookAt(hand, mid, normal);
             }
             // else
             // {
@@ -518,12 +499,12 @@ namespace VLive.Runtime
                     LookAt(shin, foot, upWords2);
                     break;
                 }
-                default:
-                    LookAt(shin, foot, Dir(shin, foot) + Dir(shin, thigh));
-                    break;
+                // default:
+                //     LookAt(shin, foot, Dir(shin, foot) + Dir(shin, thigh));
+                //     break;
             }
 
-            LookAt(foot, toe, Dir(shin, foot));
+            // LookAt(foot, toe, Dir(shin, foot));
         }
 
         private float GetVectorAngle(JointIndex index1, JointIndex index2, JointIndex index3) =>
@@ -604,16 +585,16 @@ namespace VLive.Runtime
         
         private void SolveHead(PoseData poseData)
         {
-            // _jointPointDict[JointIndex.LeftEar.Int()].SetNow3D(poseData.NewPosList[7]);
-            // _jointPointDict[JointIndex.RightEar.Int()].SetNow3D(poseData.NewPosList[8]);
-            // _jointPointDict[JointIndex.Nose.Int()].SetNow3D(poseData.NewPosList[0]);
+            _jointPointDict[JointIndex.LeftEar.Int()].SetNow3D(poseData.NewPosList[7]);
+            _jointPointDict[JointIndex.RightEar.Int()].SetNow3D(poseData.NewPosList[8]);
+            _jointPointDict[JointIndex.Nose.Int()].SetNow3D(poseData.NewPosList[0]);
             _jointPointDict[JointIndex.Neck.Int()].Now3D = (_jointPointDict[JointIndex.RightUpperArm.Int()].Now3D +
                                                             _jointPointDict[JointIndex.LeftUpperArm.Int()].Now3D) *
                                                            0.5f;
             _jointPointDict[JointIndex.Neck.Int()].Enabled = true;
-            // _jointPointDict[JointIndex.Head.Int()].Now3D = (_jointPointDict[JointIndex.RightEar.Int()].Now3D +
-            //                                                 _jointPointDict[JointIndex.LeftEar.Int()].Now3D) * 0.5f;
-            // _jointPointDict[JointIndex.Head.Int()].Enabled = true;
+            _jointPointDict[JointIndex.Head.Int()].Now3D = (_jointPointDict[JointIndex.RightEar.Int()].Now3D +
+                                                            _jointPointDict[JointIndex.LeftEar.Int()].Now3D) * 0.5f;
+            _jointPointDict[JointIndex.Head.Int()].Enabled = true;
         }
     }
 }
