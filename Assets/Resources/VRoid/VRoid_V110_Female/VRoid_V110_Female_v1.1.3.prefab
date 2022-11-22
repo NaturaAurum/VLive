@@ -4960,6 +4960,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f525db93c44243e8af40c9c94e1fa3e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  skeletonMat: {fileID: 2100000, guid: 18f0e2e117a39344095517b9f350d06f, type: 2}
+  skeletonMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &7796849900167382218
 GameObject:
   m_ObjectHideFlags: 0

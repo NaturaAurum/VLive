@@ -40,6 +40,7 @@ namespace VLive.Runtime
         [SerializeField]
         private HolisticReceiver receiver;
         [SerializeField] private HolisticLandmarkListAnnotationController holisticAnnotationController;
+        [SerializeField] private MaskAnnotationController maskAnnotationController;
 
         private TextureFramePool _textureFramePool;
         private HolisticTrackingGraph _holisticGraphRunner;
@@ -114,7 +115,7 @@ namespace VLive.Runtime
             }
             AddGraphListener();
             _holisticGraphRunner.StartRun(ImageSource);
-
+            maskAnnotationController.InitScreen(ImageSource.textureWidth, ImageSource.textureHeight);
             while (true)
             {
                 if (!_textureFramePool.TryGetTextureFrame(out var textureFrame))
@@ -135,8 +136,13 @@ namespace VLive.Runtime
             _holisticGraphRunner.OnRightHandLandmarksOutput += OnRightHandLandmarks;
             _holisticGraphRunner.OnPoseWorldLandmarksOutput += OnPoseWorldLandmarks;
             _holisticGraphRunner.OnPoseLandmarksOutput += OnPoseLandmarks;
+            _holisticGraphRunner.OnSegmentationMaskOutput += OnSegmentationMasks;
         }
-        
+        private void OnSegmentationMasks(object sender, OutputEventArgs<ImageFrame> e)
+        {
+            maskAnnotationController.DrawLater(e.value);
+        }
+
         private void OnPoseLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _poseLandmarks = e.value;
@@ -222,9 +228,10 @@ namespace VLive.Runtime
                 {
                     var point2D = point.Point;
                     var point3D = pose3[index].Point;
-                    point2D = Vector3.Scale(point2D, Vector3.one * 0.01f);
+                    // point2D = Vector3.Scale(point2D, Vector3.one * 0.01f);
                     point2D.z = point3D.z;
-                    point2D.y += 5.7f;
+                    // point2D.y = -point2D.y;
+                    // point2D.y += 5.7f;
                     // point2D.x -= 2.4f;
                     point.Point = point2D;
                     return point;
@@ -238,7 +245,7 @@ namespace VLive.Runtime
             if (leftHandValid)
             {
                 _handsData.LeftPosList = _leftHandLandmarks.Landmark.ToVector3List(_screenRect);
-                _handsData.LeftPosList = _handsData.LeftPosList.Select(point => point.ApplyRotation(modelRot)).ToList();
+                // _handsData.LeftPosList = _handsData.LeftPosList.Select(point => point.ApplyRotation(Quaternion.Euler(0, 180, 0))).ToList();
             }
             else
             {
@@ -248,7 +255,7 @@ namespace VLive.Runtime
             if (rightHandValid)
             {
                 _handsData.RightPosList = _rightHandLandmarks.Landmark.ToVector3List(_screenRect);
-                _handsData.RightPosList = _handsData.RightPosList.Select(point => point.ApplyRotation(modelRot)).ToList();
+                // _handsData.RightPosList = _handsData.RightPosList.Select(point => point.ApplyRotation(Quaternion.Euler(0, 180, 0))).ToList();
             }
             else
             {

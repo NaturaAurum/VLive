@@ -386,22 +386,21 @@ namespace VLive.Runtime
             hip.Transform.rotation = Quaternion.LookRotation(forwardLowerVec, -downVec) * hip.InverseRotation;
 
             // rightAngle < 100.0f
-            if (bodyAngle > 10.0f && rightAngle < 100f)
-            {
-                var chest = _jointPointDict[JointIndex.Chest.Int()];
-                if (chest.Enabled)
-                {
-                    LookAt(JointIndex.Spine, JointIndex.Chest, forwardUpperVec);
-                    LookAt(JointIndex.Chest, JointIndex.Neck, forwardUpperVec);
-                }
 
-                UpdateArmJoints(JointIndex.LeftUpperArm, JointIndex.LeftLowerArm, JointIndex.LeftHand,
-                                JointIndex.LeftShoulder, JointIndex.LeftThumb2, JointIndex.LeftMid1, forwardUpperVec,
-                                ref _leftUpperForward, ref _leftLowerForward);
-                UpdateArmJoints(JointIndex.RightUpperArm, JointIndex.RightLowerArm, JointIndex.RightHand,
-                                JointIndex.RightShoulder, JointIndex.RightThumb2, JointIndex.RightMid1, forwardUpperVec,
-                                ref _rightUpperForward, ref _rightLowerForward);
+            var chest = _jointPointDict[JointIndex.Chest.Int()];
+            if (chest.Enabled)
+            {
+                LookAt(JointIndex.Spine, JointIndex.Chest, forwardUpperVec);
+                LookAt(JointIndex.Chest, JointIndex.Neck, forwardUpperVec);
             }
+
+            UpdateArmJoints(JointIndex.LeftUpperArm, JointIndex.LeftLowerArm, JointIndex.LeftHand,
+                            JointIndex.LeftShoulder, JointIndex.LeftThumb2, JointIndex.LeftMid1, forwardUpperVec,
+                            ref _leftUpperForward, ref _leftLowerForward);
+            UpdateArmJoints(JointIndex.RightUpperArm, JointIndex.RightLowerArm, JointIndex.RightHand,
+                            JointIndex.RightShoulder, JointIndex.RightThumb2, JointIndex.RightMid1, forwardUpperVec,
+                            ref _rightUpperForward, ref _rightLowerForward);
+            
 
             UpdateLegJoints(JointIndex.LeftThigh, JointIndex.LeftShin, JointIndex.LeftFoot, JointIndex.LeftToe,
                 rightLowerVec, forwardLowerVec);
@@ -412,7 +411,7 @@ namespace VLive.Runtime
         private void UpdateArmJoints(JointIndex upper, JointIndex lower, JointIndex hand, JointIndex thumb,
             JointIndex mid, JointIndex shoulder, Vector3 forward, ref Vector3 upperForward, ref Vector3 lowerForward)
         {
-            if (_jointPointDict[hand.Int()].Enabled && _jointPointDict[lower.Int()].Enabled)
+            if (_jointPointDict[hand.Int()].Enabled)
             {
                 // var isLeft = upper.ToString().StartsWith(LeftString);
                 if (_jointPointDict[shoulder.Int()].Enabled)
