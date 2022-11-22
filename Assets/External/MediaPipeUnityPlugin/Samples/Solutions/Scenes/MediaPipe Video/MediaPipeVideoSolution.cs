@@ -27,7 +27,7 @@ namespace Mediapipe.Unity.MediaPipeVideo
           textureFrame.RemoveAllReleaseListeners();
           graphRunner.SetupOutputPacket(textureFrame);
 
-          screen.texture = Texture2D.CreateExternalTexture(textureFrame.width, textureFrame.height, textureFrame.format, false, false, textureFrame.GetNativeTexturePtr());
+          screen.Texture = Texture2D.CreateExternalTexture(textureFrame.width, textureFrame.height, textureFrame.format, false, false, textureFrame.GetNativeTexturePtr());
         }
         else
         {
@@ -37,7 +37,7 @@ namespace Mediapipe.Unity.MediaPipeVideo
       else
       {
         _outputTexture = new Texture2D(imageSource.textureWidth, imageSource.textureHeight, TextureFormat.RGBA32, false);
-        screen.texture = _outputTexture;
+        screen.Texture = _outputTexture;
       }
     }
 
