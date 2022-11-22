@@ -8,26 +8,31 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: F00_000_Hair_00_HAIR_06
-  m_Shader: {fileID: 4800000, guid: 1a97144e4ad27a04aafd70f7b915cedb, type: 3}
+  m_Shader: {fileID: 4800000, guid: e2c41f2ba6a3f334d894aeac1b04af52, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - MTOON_OUTLINE_COLOR_FIXED
   - MTOON_OUTLINE_WIDTH_WORLD
   - _ALPHATEST_ON
+  - _CULL_NONE
   - _NORMALMAP
-  m_InvalidKeywords: []
+  - _USEALPHACLIPPING_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2450
-  stringTagMap:
-    RenderType: TransparentCutout
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 078f9c367356f7b46abdc72798a07d60, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 2800000, guid: 029edccb15a546644b18ff8b1cc90baa, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -52,6 +57,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ShadeMap:
+        m_Texture: {fileID: 2800000, guid: 078f9c367356f7b46abdc72798a07d60, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _ShadeTexture:
         m_Texture: {fileID: 2800000, guid: 078f9c367356f7b46abdc72798a07d60, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -73,19 +82,25 @@ Material:
     - _AlphaToMask: 0
     - _BlendMode: 1
     - _BumpScale: 1
+    - _CelShadeMidPoint: 0.3
+    - _CelShadeSoftness: 0.1
+    - _Cull: 0
     - _CullMode: 0
     - _Cutoff: 0.5
     - _DebugMode: 0
+    - _DirectLightMultiplier: 1
     - _DstBlend: 0
     - _IndirectLightIntensity: 0.1
+    - _IndirectLightMultiplier: 0.1
     - _LightColorAttenuation: 0
     - _MToonVersion: 38
     - _OutlineColorMode: 0
     - _OutlineCullMode: 1
     - _OutlineLightingMix: 1
     - _OutlineScaledMaxDistance: 2.71
-    - _OutlineWidth: 0.095624395
+    - _OutlineWidth: 0
     - _OutlineWidthMode: 1
+    - _ReceiveShadowMappingAmount: 0.5
     - _ReceiveShadowRate: 1
     - _RimFresnelPower: 1
     - _RimLift: 0
@@ -94,13 +109,19 @@ Material:
     - _ShadeToony: 0
     - _ShadingGradeRate: 1
     - _SrcBlend: 1
+    - _UseAlphaClipping: 1
+    - _UseEmission: 0
     - _UvAnimRotation: 0
     - _UvAnimScrollX: 0
     - _UvAnimScrollY: 0
+    - _VColBlendMode: 0
     - _ZWrite: 1
     m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionMapChannelMask: {r: 1, g: 1, b: 1, a: 1}
+    - _IndirectLightConstColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 0, g: 0, b: 0, a: 1}
     - _ShadeColor: {r: 1, g: 1, b: 1, a: 1}

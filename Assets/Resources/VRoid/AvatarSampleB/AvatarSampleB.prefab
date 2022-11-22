@@ -2534,6 +2534,7 @@ GameObject:
   - component: {fileID: 1575558287573076109}
   - component: {fileID: 6742328283237980778}
   - component: {fileID: 7444135176401644009}
+  - component: {fileID: 3400381638955802968}
   m_Layer: 0
   m_Name: AvatarSampleB
   m_TagString: Untagged
@@ -2831,7 +2832,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aad35053d20a43a7b36e3756cc46c4d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonMat: {fileID: 2100000, guid: 18f0e2e117a39344095517b9f350d06f, type: 2}
 --- !u!114 &7444135176401644009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2844,8 +2844,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f525db93c44243e8af40c9c94e1fa3e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonMat: {fileID: 2100000, guid: 18f0e2e117a39344095517b9f350d06f, type: 2}
-  skeletonMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &3400381638955802968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4945835552861428297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4c58980b1e045ef8fa996463f1f55e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5098802656187006943
 GameObject:
   m_ObjectHideFlags: 0
