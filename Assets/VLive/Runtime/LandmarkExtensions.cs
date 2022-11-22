@@ -44,6 +44,15 @@ namespace VLive.Runtime
             }).ToList();
         }
 
+        public static PointData ToVector3(this NormalizedLandmark landmark)
+        {
+            return new PointData()
+            {
+                Point = new Vector3(landmark.X, landmark.Y, landmark.Z),
+                Visibility = landmark.Visibility
+            };
+        }
+
         private static Vector3 ToVector3(this Landmark landmark, RectTransform rectTf, float scale)
         {
             var imageSource = ImageSourceProvider.ImageSource;

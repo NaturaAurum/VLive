@@ -4,24 +4,12 @@ using System.Linq;
 using UnityEngine;
 namespace VLive.Runtime
 {
-    public class Skeleton
-    {
-        public GameObject LineObject;
-        public LineRenderer Line;
 
-        public JointPoint Start;
-        public JointPoint End;
-    }
-    
     [RequireComponent(typeof(Animator))]
     public class PoseSolver : MonoBehaviour, IPoseSolver
     {
-        [SerializeField]
-        private Material skeletonMat;
-
         private Animator _animator;
         private readonly Dictionary<int, JointPoint> _jointPointDict = new();
-        private readonly List<Skeleton> _skeletons = new();
         private readonly List<JointKalmanFilter> _kalmanFilters = new();
         private readonly List<OneEuroFilter<Vector3>> _oneEuroFilters = new();
         
@@ -44,28 +32,8 @@ namespace VLive.Runtime
             InitJointPointDict();
             SetHierarchy();
             SetRotationInfo();
-            SetSkeleton();
         }
-        
-        private void AddSkeleton(JointPoint start, JointPoint end)
-        {
-            var skeleton = new Skeleton()
-            {
-                LineObject = new GameObject("Line"),
-                Start = start,
-                End = end
-            };
 
-            skeleton.Line = skeleton.LineObject.AddComponent<LineRenderer>();
-            skeleton.Line.startWidth = 0.04f;
-            skeleton.Line.endWidth = 0.01f;
-
-            skeleton.Line.positionCount = 2;
-            skeleton.Line.material = skeletonMat;
-
-            _skeletons.Add(skeleton);
-        }
-        
         private void InitJointPointDict()
         {
             foreach (JointIndex jointIndex in Enum.GetValues(typeof(JointIndex)))
@@ -116,54 +84,7 @@ namespace VLive.Runtime
             // head
             _jointPointDict[JointIndex.Neck.Int()].Child = _jointPointDict[JointIndex.Head.Int()];
         }
-        
-        private void SetSkeleton()
-        {
-            AddSkeleton(_jointPointDict[JointIndex.RightUpperArm.Int()], _jointPointDict[JointIndex.RightLowerArm.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightLowerArm.Int()], _jointPointDict[JointIndex.RightHand.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightHand.Int()], _jointPointDict[JointIndex.RightThumb2.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightHand.Int()], _jointPointDict[JointIndex.RightMid1.Int()]);
 
-            // Left Arm
-            AddSkeleton(_jointPointDict[JointIndex.LeftUpperArm.Int()], _jointPointDict[JointIndex.LeftLowerArm.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftLowerArm.Int()], _jointPointDict[JointIndex.LeftHand.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftHand.Int()], _jointPointDict[JointIndex.LeftThumb2.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftHand.Int()], _jointPointDict[JointIndex.LeftMid1.Int()]);
-
-            // Face
-            //AddSkeleton(PositionIndex.lEar, PositionIndex.lEye);
-            //AddSkeleton(PositionIndex.lEye, PositionIndex.Nose);
-            //AddSkeleton(PositionIndex.rEar, PositionIndex.rEye);
-            //AddSkeleton(PositionIndex.rEye, PositionIndex.Nose);
-            AddSkeleton(_jointPointDict[JointIndex.LeftEar.Int()], _jointPointDict[JointIndex.Nose.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightEar.Int()], _jointPointDict[JointIndex.Nose.Int()]);
-
-            // Right Leg
-            AddSkeleton(_jointPointDict[JointIndex.RightThigh.Int()], _jointPointDict[JointIndex.RightShin.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightShin.Int()], _jointPointDict[JointIndex.RightFoot.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightFoot.Int()], _jointPointDict[JointIndex.RightToe.Int()]);
-            //
-            // // Left Leg
-            AddSkeleton(_jointPointDict[JointIndex.LeftThigh.Int()], _jointPointDict[JointIndex.LeftShin.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftShin.Int()], _jointPointDict[JointIndex.LeftFoot.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftFoot.Int()], _jointPointDict[JointIndex.LeftToe.Int()]);
-
-            // etc
-            AddSkeleton(_jointPointDict[JointIndex.Spine.Int()], _jointPointDict[JointIndex.Neck.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.Neck.Int()], _jointPointDict[JointIndex.Head.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.Head.Int()], _jointPointDict[JointIndex.Nose.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.Neck.Int()], _jointPointDict[JointIndex.RightUpperArm.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.Neck.Int()], _jointPointDict[JointIndex.LeftUpperArm.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightThigh.Int()], _jointPointDict[JointIndex.RightUpperArm.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftThigh.Int()], _jointPointDict[JointIndex.LeftUpperArm.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightUpperArm.Int()], _jointPointDict[JointIndex.AbdomenUpper.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftUpperArm.Int()], _jointPointDict[JointIndex.AbdomenUpper.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.RightThigh.Int()], _jointPointDict[JointIndex.AbdomenUpper.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftThigh.Int()], _jointPointDict[JointIndex.AbdomenUpper.Int()]);
-            AddSkeleton(_jointPointDict[JointIndex.LeftThigh.Int()], _jointPointDict[JointIndex.RightThigh.Int()]);
-            
-        }
-        
         private void SetRotationInfo()
         {
             var forward = TriangleNormal(_jointPointDict[JointIndex.Hip.Int()].Transform.position,
@@ -196,17 +117,11 @@ namespace VLive.Runtime
             }
 
             var hip = _jointPointDict[JointIndex.Hip.Int()];
-            // _initPos = transform.position;
             hip.Inverse = Quaternion.Inverse(Quaternion.LookRotation(-forward));
             hip.InverseRotation = hip.Inverse * hip.InitRotation;
 
             var head = _jointPointDict[JointIndex.Head.Int()];
             var headPosition = head.Transform.position;
-            // _initHeadPos = headPosition;
-            // head.InitRotation = head.Transform.rotation;
-            // var forward2 = _jointPointDict[JointIndex.Nose.Int()].Transform.position - headPosition;
-            // head.Inverse = Quaternion.Inverse(Quaternion.LookRotation(forward2));
-            // head.InverseRotation = head.Inverse * head.InitRotation;
 
             var rightHand = _jointPointDict[JointIndex.RightHand.Int()];
             var leftHand = _jointPointDict[JointIndex.LeftHand.Int()];
@@ -338,18 +253,8 @@ namespace VLive.Runtime
             UpdateKalmanFilter();
             UpdateOneEuroFilter();
             UpdateJoints(data, forward);
-            UpdateSkeleton();
         }
-        
-        private void UpdateSkeleton()
-        {
-            foreach (var skeleton in _skeletons)
-            {
-                skeleton.Line.SetPosition(0, skeleton.Start.Now3D);
-                skeleton.Line.SetPosition(1, skeleton.End.Now3D);
-            }
-        }
-        
+
         private void UpdateKalmanFilter()
         {
             for (var i = 0; i < _jointPointDict.Values.Count; i++)
@@ -383,7 +288,7 @@ namespace VLive.Runtime
             var rightLowerVec = Vector3.Cross(forwardLowerVec, downVec);
             var rightAngle = Vector3.Angle(rightUpperVec, rightLowerVec);
             var bodyAngle = Vector3.Angle(upperVec, downVec);
-            hip.Transform.rotation = Quaternion.LookRotation(forwardLowerVec, -downVec) * hip.InverseRotation;
+            // hip.Transform.rotation = Quaternion.LookRotation(forward, -downVec) * hip.InverseRotation;
 
             // rightAngle < 100.0f
 

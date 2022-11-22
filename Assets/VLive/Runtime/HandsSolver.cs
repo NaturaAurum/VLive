@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -7,15 +6,6 @@ namespace VLive.Runtime
 {
     public class HandsSolver : MonoBehaviour, IHandsSolver
     {
-        [SerializeField]
-        private Material skeletonMat;
-        [SerializeField]
-        private Mesh skeletonMesh;
-        [SerializeField]
-        private List<Transform> leftDrawer;
-        [SerializeField]
-        private List<Transform> rightDrawer;
-
         private static readonly string[] FingerNames = {
             "Thumb",
             "Index",
@@ -105,11 +95,8 @@ namespace VLive.Runtime
             {
                 data.LeftPosList = data.LeftPosList.Select((point, index) =>
                 {
-                    // point.Point = _leftHand.position + Vector3.Scale(point.Point - data.LeftPosList[0].Point, Vector3.one * 0.01f);
                     point.Point = _leftKalmanFilters[index].CorrectAndPredict(point.Point);
                     point.Point = _leftOneEuroFilters[index].Filter(point.Point);
-                    // point.Point = _leftHand.TransformPoint(point.Point);
-                    leftDrawer[index].position = point.Point;
                     return point;
                 }).ToList();
                 SetHandRotation(_leftHand, data.LeftPosList, false);
@@ -124,11 +111,8 @@ namespace VLive.Runtime
             {
                 data.RightPosList = data.RightPosList.Select((point, index) =>
                 {
-                    // point.Point = _rightHand.position + Vector3.Scale(point.Point - data.RightPosList[0].Point, Vector3.one * 0.01f);
                     point.Point = _rightKalmanFilters[index].CorrectAndPredict(point.Point);
                     point.Point = _rightOneEuroFilters[index].Filter(point.Point);
-                    // point.Point = _rightHand.TransformPoint(point.Point);
-                    rightDrawer[index].position = point.Point;
                     return point;
                 }).ToList();
                 SetHandRotation(_rightHand, data.RightPosList, true);
@@ -147,11 +131,8 @@ namespace VLive.Runtime
                 return;
             }
 
-            // points = points.Select(point => point.ApplyRotation(Quaternion.Euler(0, 180, 0))).ToList();
-
             var lowerArm = hand.parent;
             var upperArm = lowerArm.parent;
-
             
             var quaternion1 = upperArm.rotation;
             var quaternion2 = Quaternion.Inverse(lowerArm.localRotation) * quaternion1;
