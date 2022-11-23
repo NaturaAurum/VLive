@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-namespace VLive.Runtime
+using VLive.Runtime.Utilities;
+namespace VLive.Runtime.MediaPipe
 {
 
     [RequireComponent(typeof(Animator))]
@@ -25,6 +26,8 @@ namespace VLive.Runtime
         private Vector3 _rightUpperForward;
         private Vector3 _rightLowerForward;
         private const string LeftString = "Left";
+
+        private Plane _headPlane;
 
         private void Awake()
         {
@@ -311,6 +314,26 @@ namespace VLive.Runtime
                 rightLowerVec, forwardLowerVec);
             UpdateLegJoints(JointIndex.RightThigh, JointIndex.RightShin, JointIndex.RightFoot, JointIndex.RightToe,
                 rightLowerVec, forwardLowerVec);
+            
+            UpdateHeadJoints();
+        }
+
+        private void UpdateHeadJoints()
+        {
+            var lEar = _jointPointDict[JointIndex.LeftEar.Int()];
+            var rEar = _jointPointDict[JointIndex.RightEar.Int()];
+            var nose = _jointPointDict[JointIndex.Nose.Int()];
+            var head = _jointPointDict[JointIndex.Head.Int()];
+            _headPlane.Set3Points(nose.Pos3D, lEar.Pos3D, rEar.Pos3D);
+            var forward = _headPlane.normal;
+            var right = lEar.Pos3D - rEar.Pos3D;
+            var up = Vector3.Cross(forward, right);
+
+            var position = head.Transform.position;
+            Debug.DrawRay(position, forward, Color.blue, 0.5f);
+            Debug.DrawRay(position, up, Color.green, 0.5f);
+            Debug.DrawRay(position, right, Color.red, 0.5f);
+            
         }
         
         private void UpdateArmJoints(JointIndex upper, JointIndex lower, JointIndex hand, JointIndex thumb,
@@ -489,9 +512,10 @@ namespace VLive.Runtime
         
         private void SolveHead(PoseData poseData)
         {
-            _jointPointDict[JointIndex.LeftEar.Int()].SetNow3D(poseData.NewPosList[7]);
-            _jointPointDict[JointIndex.RightEar.Int()].SetNow3D(poseData.NewPosList[8]);
+            _jointPointDict[JointIndex.LeftEar.Int()].SetNow3D(poseData.NewPosList[1]);
+            _jointPointDict[JointIndex.RightEar.Int()].SetNow3D(poseData.NewPosList[4]);
             _jointPointDict[JointIndex.Nose.Int()].SetNow3D(poseData.NewPosList[0]);
+            _jointPointDict[JointIndex.Nose.Int()].Now3D.y = _jointPointDict[JointIndex.LeftEar.Int()].Now3D.y;
             _jointPointDict[JointIndex.Neck.Int()].Now3D = (_jointPointDict[JointIndex.RightUpperArm.Int()].Now3D +
                                                             _jointPointDict[JointIndex.LeftUpperArm.Int()].Now3D) *
                                                            0.5f;

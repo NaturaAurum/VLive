@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using Mediapipe;
 using UnityEngine;
-namespace VLive.Runtime
+namespace VLive.Runtime.MediaPipe
 {
     public struct PointData
     {
@@ -39,5 +40,6 @@ namespace VLive.Runtime
     public class FaceData
     {
         public List<PointData> PosList = new();
+        public NormalizedLandmarkList Origin;
     }
 }

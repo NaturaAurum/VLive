@@ -1,5 +1,7 @@
 using UnityEngine;
-namespace VLive.Runtime
+using VLive.Runtime.Extensions;
+using VLive.Runtime.MediaPipe;
+namespace VLive.Runtime.Utilities
 {
     public class JointKalmanFilter
     {

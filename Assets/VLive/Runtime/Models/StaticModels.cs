@@ -1,10 +1,9 @@
-using System;
 using UnityEngine;
-namespace VLive.Runtime
+namespace VLive.Runtime.Models
 {
-    public class Models : MonoBehaviour
+    public class StaticModels : MonoBehaviour
     {
-        public static Models Instance { get; private set; }
+        public static StaticModels Instance { get; private set; }
 
         private void Awake()
         {

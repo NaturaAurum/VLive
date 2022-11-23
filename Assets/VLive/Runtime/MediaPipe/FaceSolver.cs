@@ -1,6 +1,7 @@
 using UnityEngine;
+using VLive.Runtime.Extensions;
 using VRM;
-namespace VLive.Runtime
+namespace VLive.Runtime.MediaPipe
 {
     public enum FaceBlendShape
     {
@@ -179,7 +180,7 @@ namespace VLive.Runtime
             var smileRight = upperLip.y - mouthCornerRight.y;
 
             var mouthSmileLeft = 1 - FaceBlendShape.MouthSmileLeft.RemapBlendShape(smileLeft);
-            var mouthSmileRight = 1 - FaceBlendShape.MouthSmileRight.RemapBlendShape(smileRight);
+            var mouthSmileRight = FaceBlendShape.MouthSmileRight.RemapBlendShape(smileRight);
             
             FaceBlendShape.MouthSmileLeft.Set(_blendShapeProxy, mouthSmileLeft);
             FaceBlendShape.MouthSmileRight.Set(_blendShapeProxy, mouthSmileRight);
@@ -190,8 +191,8 @@ namespace VLive.Runtime
             var mouthFrownLeft = (mouthCornerLeft - data.PosList[CanonicalPoints.MouthFrownLeft].Point).y;
             var mouthFrownRight = (mouthCornerRight - data.PosList[CanonicalPoints.MouthFrownRight].Point).y;
 
-            FaceBlendShape.MouthFrownLeft.Set(_blendShapeProxy, 1 - mouthFrownLeft);
-            FaceBlendShape.MouthFrownRight.Set(_blendShapeProxy, 1 - mouthFrownRight);
+            FaceBlendShape.MouthFrownLeft.Set(_blendShapeProxy, mouthFrownLeft);
+            FaceBlendShape.MouthFrownRight.Set(_blendShapeProxy,  mouthFrownRight);
 
             var mouthLeftStretchPoint = data.PosList[CanonicalPoints.MouthLeftStretch].Point;
             var mouthRightStretchPoint = data.PosList[CanonicalPoints.MouthRightStretch].Point;
@@ -202,7 +203,7 @@ namespace VLive.Runtime
             var mouthCenterRightStretch = mouthCenter.x - mouthRightStretchPoint.x;
 
             var mouthLeft = FaceBlendShape.MouthLeft.RemapBlendShape(mouthCenterLeftStretch);
-            var mouthRight = 1 - FaceBlendShape.MouthRight.RemapBlendShape(mouthCenterRightStretch);
+            var mouthRight =  FaceBlendShape.MouthRight.RemapBlendShape(mouthCenterRightStretch);
             
             FaceBlendShape.MouthLeft.Set(_blendShapeProxy, mouthLeft);
             FaceBlendShape.MouthRight.Set(_blendShapeProxy, mouthRight);
@@ -220,7 +221,7 @@ namespace VLive.Runtime
 
             var jawRightLeft = noseTip.x - lowestChin.x;
             
-            FaceBlendShape.JawLeft.Set(_blendShapeProxy, 1 - FaceBlendShape.JawLeft.RemapBlendShape(jawRightLeft));
+            FaceBlendShape.JawLeft.Set(_blendShapeProxy,  1 - FaceBlendShape.JawLeft.RemapBlendShape(jawRightLeft));
             FaceBlendShape.JawRight.Set(_blendShapeProxy, jawRightLeft, true);
 
             var lowestLip = data.PosList[CanonicalPoints.LowestLip].Point;
@@ -230,25 +231,25 @@ namespace VLive.Runtime
             var upperLipDist = Vector3.Distance(upperLip, upperOuterLip);
 
             var mouthPucker = FaceBlendShape.MouthPucker.RemapBlendShape(mouthWidth);
-            FaceBlendShape.MouthPucker.Set(_blendShapeProxy, 1 - mouthPucker);
-            FaceBlendShape.MouthRollLower.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthRollLower.RemapBlendShape(outerLipDist));
-            FaceBlendShape.MouthRollUpper.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthRollUpper.RemapBlendShape(upperLipDist));
+            FaceBlendShape.MouthPucker.Set(_blendShapeProxy,  mouthPucker);
+            FaceBlendShape.MouthRollLower.Set(_blendShapeProxy,  FaceBlendShape.MouthRollLower.RemapBlendShape(outerLipDist));
+            FaceBlendShape.MouthRollUpper.Set(_blendShapeProxy,  FaceBlendShape.MouthRollUpper.RemapBlendShape(upperLipDist));
 
             var upperLipNoseDist = noseTip.y - uppestLip.y;
-            FaceBlendShape.MouthShrugUpper.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthShrugUpper.RemapBlendShape(upperLipNoseDist));
+            FaceBlendShape.MouthShrugUpper.Set(_blendShapeProxy,  FaceBlendShape.MouthShrugUpper.RemapBlendShape(upperLipNoseDist));
 
             var overUpperLip = data.PosList[CanonicalPoints.OverUpperLip].Point;
             var mouthShrugLower = Vector3.Distance(lowestLip, overUpperLip);
 
-            FaceBlendShape.MouthShrugLower.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthShrugLower.RemapBlendShape(mouthShrugLower));
+            FaceBlendShape.MouthShrugLower.Set(_blendShapeProxy,  FaceBlendShape.MouthShrugLower.RemapBlendShape(mouthShrugLower));
 
             var lowerDownLeft = Vector3.Distance(data.PosList[424].Point, data.PosList[319].Point) + mouthOpenDist * 0.5f;
             var lowerDownRight = Vector3.Distance(data.PosList[204].Point, data.PosList[89].Point) + mouthOpenDist * 0.5f;
             
-            FaceBlendShape.MouthLowerDownLeft.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthLowerDownLeft.RemapBlendShape(lowerDownLeft));
-            FaceBlendShape.MouthLowerDownRight.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthLowerDownRight.RemapBlendShape(lowerDownRight));
+            FaceBlendShape.MouthLowerDownLeft.Set(_blendShapeProxy,  FaceBlendShape.MouthLowerDownLeft.RemapBlendShape(lowerDownLeft));
+            FaceBlendShape.MouthLowerDownRight.Set(_blendShapeProxy,  FaceBlendShape.MouthLowerDownRight.RemapBlendShape(lowerDownRight));
 
-            FaceBlendShape.MouthFunnel.Set(_blendShapeProxy, mouthPucker < 0.5f ? 1 - FaceBlendShape.MouthFunnel.RemapBlendShape(mouthWidth) : 0);
+            FaceBlendShape.MouthFunnel.Set(_blendShapeProxy, mouthPucker < 0.5f ?  FaceBlendShape.MouthFunnel.RemapBlendShape(mouthWidth) : 0);
 
             var leftUpperPressIndices = CanonicalPoints.LeftUpperPress;
             var leftLowerPressIndices = CanonicalPoints.LeftLowerPress;
@@ -265,8 +266,8 @@ namespace VLive.Runtime
 
             var mouthPressRight = (rightUpperPress + rightLowerPress) * 0.5f;
             
-            FaceBlendShape.MouthPressLeft.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthPressLeft.RemapBlendShape(mouthPressLeft));
-            FaceBlendShape.MouthPressRight.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthPressRight.RemapBlendShape(mouthPressRight));
+            FaceBlendShape.MouthPressLeft.Set(_blendShapeProxy,  FaceBlendShape.MouthPressLeft.RemapBlendShape(mouthPressLeft));
+            FaceBlendShape.MouthPressRight.Set(_blendShapeProxy,  FaceBlendShape.MouthPressRight.RemapBlendShape(mouthPressRight));
         }
 
         private void EyeSolve(FaceData data)

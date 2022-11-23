@@ -1,4 +1,4 @@
-namespace VLive.Runtime
+namespace VLive.Runtime.MediaPipe
 {
     public interface ISolver<in T> where T : class
     {

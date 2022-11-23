@@ -1,5 +1,6 @@
 using UnityEngine;
-namespace VLive.Runtime
+using VLive.Runtime.Extensions;
+namespace VLive.Runtime.Utilities
 {
     public class Vector3KalmanFilter
     {

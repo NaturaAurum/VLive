@@ -4,7 +4,8 @@ using Mediapipe;
 using Mediapipe.Unity;
 using Mediapipe.Unity.CoordinateSystem;
 using UnityEngine;
-namespace VLive.Runtime
+using VLive.Runtime.MediaPipe;
+namespace VLive.Runtime.Extensions
 {
     public static class LandmarkExtensions
     {

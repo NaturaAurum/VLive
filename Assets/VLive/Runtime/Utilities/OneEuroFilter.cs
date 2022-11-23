@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace VLive.Runtime
+namespace VLive.Runtime.Utilities
 {
     /* 
      * OneEuroFilter.cs

@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-namespace VLive.Runtime
+using VLive.Runtime.Utilities;
+namespace VLive.Runtime.MediaPipe
 {
     public class HandsSolver : MonoBehaviour, IHandsSolver
     {

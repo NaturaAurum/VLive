@@ -6,9 +6,10 @@ using Mediapipe;
 using Mediapipe.Unity;
 using Mediapipe.Unity.Holistic;
 using UnityEngine;
+using VLive.Runtime.Extensions;
 using Logger = Mediapipe.Unity.Logger;
 using Screen = Mediapipe.Unity.Screen;
-namespace VLive.Runtime
+namespace VLive.Runtime.MediaPipe
 {
     [RequireComponent(typeof(TextureFramePool))]
     [RequireComponent(typeof(WebCamSource))]
@@ -39,7 +40,7 @@ namespace VLive.Runtime
         private ImageSourceType imageSourceType;
         [SerializeField]
         private HolisticReceiver receiver;
-        // [SerializeField] private HolisticLandmarkListAnnotationController holisticAnnotationController;
+        [SerializeField] private HolisticLandmarkListAnnotationController holisticAnnotationController;
         // [SerializeField] private MaskAnnotationController maskAnnotationController;
 
         private TextureFramePool _textureFramePool;
@@ -136,17 +137,12 @@ namespace VLive.Runtime
             _holisticGraphRunner.OnRightHandLandmarksOutput += OnRightHandLandmarks;
             _holisticGraphRunner.OnPoseWorldLandmarksOutput += OnPoseWorldLandmarks;
             _holisticGraphRunner.OnPoseLandmarksOutput += OnPoseLandmarks;
-            _holisticGraphRunner.OnSegmentationMaskOutput += OnSegmentationMasks;
-        }
-        private void OnSegmentationMasks(object sender, OutputEventArgs<ImageFrame> e)
-        {
-            // maskAnnotationController.DrawLater(e.value);
         }
 
         private void OnPoseLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _poseLandmarks = e.value;
-            // holisticAnnotationController.DrawPoseLandmarkListLater(e.value);
+            holisticAnnotationController.DrawPoseLandmarkListLater(e.value);
         }
         private void OnPoseWorldLandmarks(object sender, OutputEventArgs<LandmarkList> e)
         {
@@ -155,17 +151,17 @@ namespace VLive.Runtime
         private void OnRightHandLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _rightHandLandmarks = e.value;
-            // holisticAnnotationController.DrawRightHandLandmarkListLater(e.value);
+            holisticAnnotationController.DrawRightHandLandmarkListLater(e.value);
         }
         private void OnLeftHandLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _leftHandLandmarks = e.value;
-            // holisticAnnotationController.DrawLeftHandLandmarkListLater(e.value);
+            holisticAnnotationController.DrawLeftHandLandmarkListLater(e.value);
         }
         private void OnFaceLandmarks(object sender, OutputEventArgs<NormalizedLandmarkList> e)
         {
             _faceLandmarks = e.value;
-            // holisticAnnotationController.DrawFaceLandmarkListLater(e.value);
+            holisticAnnotationController.DrawFaceLandmarkListLater(e.value);
         }
 
         private void ReadFromImageSource(TextureFrame textureFrame)
@@ -266,6 +262,7 @@ namespace VLive.Runtime
             if (faceValid)
             {
                 _faceData.PosList = _faceLandmarks.Landmark.Select(lm => lm.ToVector3()).ToList();
+                _faceData.Origin = _faceLandmarks;
             }
             else
             {

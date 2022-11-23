@@ -1,7 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
-namespace VLive.Runtime
+namespace VLive.Runtime.MediaPipe
 {
     public class HolisticReceiver : MonoBehaviour
     {

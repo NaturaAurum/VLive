@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using VLive.Runtime.MediaPipe;
 using VRM;
-namespace VLive.Runtime
+namespace VLive.Runtime.Extensions
 {
     public static class BlendShapeExtensions
     {

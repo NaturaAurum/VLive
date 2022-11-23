@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace VLive.Runtime
+namespace VLive.Runtime.MediaPipe
 {
     public enum JointIndex
     {
