@@ -180,7 +180,8 @@ namespace VLive.Runtime.MediaPipe
             var dir = hand.localPosition;
             var lowerArm = hand.transform.parent;
             var angle = Vector3.Angle(lowerArm.up, handMatrix.rotation * Vector3.up);
-            var lowerArmRot = Quaternion.AngleAxis(rightHand ? -angle : angle, dir);
+            angle = Mathf.Repeat(rightHand ? -angle : angle, 360);
+            var lowerArmRot = Quaternion.AngleAxis(angle, dir);
             var rotation = lowerArm.rotation;
             lowerArmRot = rotation * lowerArmRot;
             // rotation = Quaternion.Slerp(rotation, lowerArmRot, Smooth * Time.deltaTime);

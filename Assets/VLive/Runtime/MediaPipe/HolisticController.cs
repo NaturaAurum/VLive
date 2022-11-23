@@ -5,8 +5,10 @@ using System.Linq;
 using Mediapipe;
 using Mediapipe.Unity;
 using Mediapipe.Unity.Holistic;
+using UniRx;
 using UnityEngine;
 using VLive.Runtime.Extensions;
+using VLive.Runtime.Models;
 using Logger = Mediapipe.Unity.Logger;
 using Screen = Mediapipe.Unity.Screen;
 namespace VLive.Runtime.MediaPipe
@@ -40,8 +42,11 @@ namespace VLive.Runtime.MediaPipe
         private ImageSourceType imageSourceType;
         [SerializeField]
         private HolisticReceiver receiver;
-        [SerializeField] private HolisticLandmarkListAnnotationController holisticAnnotationController;
+        [SerializeField]
+        private HolisticLandmarkListAnnotationController holisticAnnotationController;
         // [SerializeField] private MaskAnnotationController maskAnnotationController;
+        [SerializeField]
+        private LandmarkDrawer landmarkDrawer;
 
         private TextureFramePool _textureFramePool;
         private HolisticTrackingGraph _holisticGraphRunner;
@@ -51,6 +56,8 @@ namespace VLive.Runtime.MediaPipe
         private RectTransform _screenRect;
 
         private ImageSource ImageSource => ImageSourceProvider.ImageSource;
+
+        private ToggleModel PointToggle => StaticModels.Instance.PointToggle;
         
         private void Awake()
         {
@@ -62,7 +69,13 @@ namespace VLive.Runtime.MediaPipe
         private IEnumerator Start()
         {
             yield return InitSettings();
+            PointToggle.Toggle.Subscribe(Toggle).AddTo(this);
             yield return Run();
+        }
+
+        private void Toggle(bool toggle)
+        {
+            holisticAnnotationController.gameObject.SetActive(toggle);
         }
         
         private IEnumerator InitSettings()
@@ -91,9 +104,24 @@ namespace VLive.Runtime.MediaPipe
             {
                 yield return GpuManager.Initialize();
             }
-            var webCamSource = GetComponent<WebCamSource>();
-            webCamSource.isHorizontallyFlipped = true;
-            ImageSourceProvider.ImageSource = webCamSource;
+            ImageSourceProvider.ImageSource = GetImageSource();
+        }
+
+        private ImageSource GetImageSource()
+        {
+            switch (imageSourceType)
+            {
+                case ImageSourceType.Image:
+                    return GetComponent<StaticImageSource>();
+                case ImageSourceType.WebCamera:
+                    var webCamSource = GetComponent<WebCamSource>();
+                    webCamSource.isHorizontallyFlipped = true;
+                    return webCamSource;
+                case ImageSourceType.Video:
+                case ImageSourceType.Unknown:
+                default:
+                    return null;
+            }
         }
         
         private IEnumerator Run()
@@ -219,19 +247,26 @@ namespace VLive.Runtime.MediaPipe
                 var pose3D = _poseWorldLandmarks.Landmark;
 
                 var pose2 = pose2D.ToVector3List(_screenRect);
-                var pose3 = pose3D.ToVector3List(_screenRect, 1.1f);
+                var pose3 = pose3D.ToVector3List(_screenRect, 1.3f);
                 _poseData.NewPosList = pose2.Select((point, index) =>
                 {
                     var point2D = point.Point;
+                    point2D = Vector3.Scale(point.Point, Vector3.one * 0.01f);
                     var point3D = pose3[index].Point;
-                    // point2D = Vector3.Scale(point2D, Vector3.one * 0.01f);
                     point2D.z = point3D.z;
                     // point2D.y = -point2D.y;
                     // point2D.y += 5.7f;
-                    // point2D.x -= 2.4f;
+                    point2D.x += 2.4f;
                     point.Point = point2D;
                     return point;
                 }).ToList();
+                // _poseData.NewPosList = pose3.Select(point =>
+                // {
+                //     var pt = point.Point;
+                //     pt.x += Vector3.left.x;
+                //     point.Point = pt;
+                //     return point;
+                // }).ToList();
                 _poseData.NewPosList = _poseData.NewPosList.Select(point => point.ApplyRotation(modelRot)).ToList();
             }
 
@@ -261,7 +296,14 @@ namespace VLive.Runtime.MediaPipe
             var faceValid = _faceLandmarks.IsValid();
             if (faceValid)
             {
-                _faceData.PosList = _faceLandmarks.Landmark.Select(lm => lm.ToVector3()).ToList();
+                _faceData.PosList = _faceLandmarks.Landmark.Select(lm =>
+                {
+                    var pointData = lm.ToVector3();
+                    var pt = pointData.Point;
+                    pt.y *= -1;
+                    pointData.Point = pt;
+                    return pointData;
+                }).ToList();
                 _faceData.Origin = _faceLandmarks;
             }
             else
@@ -270,7 +312,9 @@ namespace VLive.Runtime.MediaPipe
             }
             receiver.SolvePose(_poseData);
             receiver.SolveHand(_handsData);
+            
             receiver.SolveFace(_faceData);
+            landmarkDrawer.Draw(_poseData, _faceData, _handsData);
         }
     }
 }

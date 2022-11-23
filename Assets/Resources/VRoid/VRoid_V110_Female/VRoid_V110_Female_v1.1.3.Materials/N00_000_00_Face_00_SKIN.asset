@@ -124,5 +124,5 @@ Material:
     - _IndirectLightConstColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _OutlineColor: {r: 0.27450976, g: 0.09019602, b: 0.12549013, a: 1}
     - _RimColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
-    - _ShadeColor: {r: 1, g: 0.9529411, b: 0.9686274, a: 1}
+    - _ShadeColor: {r: 0.9622642, g: 0.90633744, b: 0.8578676, a: 1}
   m_BuildTextureStacks: []

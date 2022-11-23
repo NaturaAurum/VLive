@@ -54,10 +54,10 @@ namespace Mediapipe.Unity
                      IList<NormalizedLandmark> leftHandLandmarks, IList<NormalizedLandmark> rightHandLandmarks, bool visualizeZ = false, int circleVertices = 128)
     {
       var mask = PoseLandmarkListAnnotation.BodyParts.All;
-      // if (faceLandmarks != null)
-      // {
-      //   mask ^= PoseLandmarkListAnnotation.BodyParts.Face;
-      // }
+      if (faceLandmarks != null)
+      {
+        mask ^= PoseLandmarkListAnnotation.BodyParts.Face;
+      }
       if (leftHandLandmarks != null)
       {
         mask ^= PoseLandmarkListAnnotation.BodyParts.LeftHand;

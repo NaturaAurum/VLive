@@ -1,5 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using VLive.Runtime.Extensions;
+using VLive.Runtime.Utilities;
 using VRM;
 namespace VLive.Runtime.MediaPipe
 {
@@ -65,7 +68,8 @@ namespace VLive.Runtime.MediaPipe
         LeftEyeRoll = 57,
         RightEyeYaw = 58,
         RightEyePitch = 59,
-        RightEyeRoll = 60
+        RightEyeRoll = 60,
+        MouthStretch
     }
 
     public class FaceSolver : MonoBehaviour, IFaceSolver
@@ -109,6 +113,15 @@ namespace VLive.Runtime.MediaPipe
         private VRMBlendShapeProxy _blendShapeProxy;
 
         private bool _isPerfectSync = false;
+        
+        private const float MinCutOffValue = 1.5f;
+        private const float DCutOffValue = 1f;
+        private const float Beta = 0.85f;
+        private const float Frequency = 60f;
+
+        private List<OneEuroFilter<Vector3>> _filters = new();
+
+        private bool _initFilters = false;
 
         private void Awake()
         {
@@ -125,6 +138,22 @@ namespace VLive.Runtime.MediaPipe
             {
                 return;
             }
+
+            if (!_initFilters)
+            {
+                for(var i = 0; i < data.PosList.Count; ++i)
+                {
+                    _filters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
+                }
+
+                _initFilters = true;
+            }
+
+            data.PosList = data.PosList.Select((point, index) =>
+            {
+                point.Point = _filters[index].Filter(point.Point);
+                return point;
+            }).ToList();
             
             MouthSolve(data);
             EyeSolve(data);
@@ -140,134 +169,197 @@ namespace VLive.Runtime.MediaPipe
 
         private void MouthSolve(FaceData data)
         {
-            if (_isPerfectSync)
-            {
-                PerfectMouthSolve(data);
-            }
-            else
-            {
-                // TODO
-            }
+            var upperLip = data.PosList[CanonicalPoints.UpperLip].Point;
+            var lowerLip = data.PosList[CanonicalPoints.LowerLip].Point;
+            var mouthCornerLeft = data.PosList[CanonicalPoints.MouthCornerLeft].Point;
+            var mouthCornerRight = data.PosList[CanonicalPoints.MouthCornerRight].Point;
+            var mouthWidth = Vector3.Distance(mouthCornerLeft, mouthCornerRight);
+            var mouthOpenDist = Vector3.Distance(upperLip, lowerLip);
+            var mouthY = FaceBlendShape.MouthClose.RemapBlendShape(mouthOpenDist);
+            var mouthX = FaceBlendShape.MouthStretch.RemapBlendShape(mouthWidth);
+
+            var ratioI = Mathf.Clamp01(mouthX.Remap(0, 1) * 2 * mouthY.Remap(0.2f, 0.7f));
+            var ratioA = mouthY * 0.4f + mouthY * (1 - ratioI) * 0.6f;
+            var ratioU = mouthY * (1-ratioI).Remap(0, 0.3f) * 0.1f;
+            var ratioE = ratioU.Remap(0.2f, 1) * (1 - ratioI) * 0.3f;
+            var ratioO = (1-ratioI) * mouthY.Remap(0.3f, 1f) * 0.4f;
+
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.A), ratioA);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.E), ratioE);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.I), ratioI);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.O), ratioO);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.U), ratioU);
+            // if (_isPerfectSync)
+            // {
+            //     PerfectMouthSolve(data);
+            // }
+            // else
+            // {
+            //     // TODO
+            // }
         }
 
         private void PerfectMouthSolve(FaceData data)
         {
             var upperLip = data.PosList[CanonicalPoints.UpperLip].Point;
-            var upperOuterLip = data.PosList[CanonicalPoints.UpperOuterLip].Point;
+            // var upperOuterLip = data.PosList[CanonicalPoints.UpperOuterLip].Point;
             var lowerLip = data.PosList[CanonicalPoints.LowerLip].Point;
             
             var mouthCornerLeft = data.PosList[CanonicalPoints.MouthCornerLeft].Point;
             var mouthCornerRight = data.PosList[CanonicalPoints.MouthCornerRight].Point;
-            var lowestChin = data.PosList[CanonicalPoints.LowestChin].Point;
-            var noseTip = data.PosList[CanonicalPoints.NoseTip].Point;
-            var upperHead = data.PosList[CanonicalPoints.UpperHead].Point;
+            // var lowestChin = data.PosList[CanonicalPoints.LowestChin].Point;
+            // var noseTip = data.PosList[CanonicalPoints.NoseTip].Point;
+            // var upperHead = data.PosList[CanonicalPoints.UpperHead].Point;
 
             var mouthWidth = Vector3.Distance(mouthCornerLeft, mouthCornerRight);
-            var mouthCenter = (upperLip + lowerLip) * 0.5f;
+            // var mouthCenter = (upperLip + lowerLip) * 0.5f;
             var mouthOpenDist = Vector3.Distance(upperLip, lowerLip);
-            var mouthCenterNoseDist = Vector3.Distance(mouthCenter, noseTip);
+            // var mouthCenterNoseDist = Vector3.Distance(mouthCenter, noseTip);
 
-            var jawNoseDist = Vector3.Distance(lowestChin, noseTip);
-            var headHeight = Vector3.Distance(upperHead, lowestChin);
-            var jawOpenRatio = jawNoseDist / headHeight;
+            // var jawNoseDist = Vector3.Distance(lowestChin, noseTip);
+            // var headHeight = Vector3.Distance(upperHead, lowestChin);
+            // var jawOpenRatio = jawNoseDist / headHeight;
 
             // for perfectSync
-            FaceBlendShape.JawOpen.Set(_blendShapeProxy, jawOpenRatio, true);
+            // FaceBlendShape.JawOpen.Set(_blendShapeProxy, jawOpenRatio, true);
+            //
+            // FaceBlendShape.MouthClose.Set(_blendShapeProxy, 1 - FaceBlendShape.MouthClose.RemapBlendShape(mouthOpenDist));
 
-            FaceBlendShape.MouthClose.Set(_blendShapeProxy, mouthCenterNoseDist - mouthOpenDist, true);
-
-            var smileLeft = upperLip.y - mouthCornerLeft.y;
-            var smileRight = upperLip.y - mouthCornerRight.y;
-
-            var mouthSmileLeft = 1 - FaceBlendShape.MouthSmileLeft.RemapBlendShape(smileLeft);
-            var mouthSmileRight = FaceBlendShape.MouthSmileRight.RemapBlendShape(smileRight);
+            // var smileLeft = upperLip.y - mouthCornerLeft.y;
+            // var smileRight = upperLip.y - mouthCornerRight.y;
+            //
+            // var mouthSmileLeft = FaceBlendShape.MouthSmileLeft.RemapBlendShape(smileLeft);
+            // var mouthSmileRight = FaceBlendShape.MouthSmileRight.RemapBlendShape(smileRight);
             
-            FaceBlendShape.MouthSmileLeft.Set(_blendShapeProxy, mouthSmileLeft);
-            FaceBlendShape.MouthSmileRight.Set(_blendShapeProxy, mouthSmileRight);
+            // FaceBlendShape.MouthSmileLeft.Set(_blendShapeProxy, mouthSmileLeft);
+            // FaceBlendShape.MouthSmileRight.Set(_blendShapeProxy, mouthSmileRight);
+            //
+            // FaceBlendShape.MouthDimpleLeft.Set(_blendShapeProxy, mouthSmileLeft * 0.5f);
+            // FaceBlendShape.MouthDimpleRight.Set(_blendShapeProxy, mouthSmileRight * 0.5f);
+
+            // var mouthFrownLeft = (mouthCornerLeft - data.PosList[CanonicalPoints.MouthFrownLeft].Point).y;
+            // var mouthFrownRight = (mouthCornerRight - data.PosList[CanonicalPoints.MouthFrownRight].Point).y;
+
+            // FaceBlendShape.MouthFrownLeft.Set(_blendShapeProxy, mouthFrownLeft);
+            // FaceBlendShape.MouthFrownRight.Set(_blendShapeProxy,  mouthFrownRight);
+
+            // var mouthLeftStretchPoint = data.PosList[CanonicalPoints.MouthLeftStretch].Point;
+            // var mouthRightStretchPoint = data.PosList[CanonicalPoints.MouthRightStretch].Point;
+            //
+            // var mouthLeftStretch = mouthCornerLeft.x - mouthLeftStretchPoint.x;
+            // var mouthRightStretch = mouthCornerRight.x - mouthRightStretchPoint.x;
+            // var mouthCenterLeftStretch = mouthCenter.x - mouthLeftStretchPoint.x;
+            // var mouthCenterRightStretch = mouthCenter.x - mouthRightStretchPoint.x;
+
+            // var mouthLeft = FaceBlendShape.MouthLeft.RemapBlendShape(mouthCenterLeftStretch);
+            // var mouthRight =  FaceBlendShape.MouthRight.RemapBlendShape(mouthCenterRightStretch);
+            //
+            // FaceBlendShape.MouthLeft.Set(_blendShapeProxy, mouthLeft);
+            // FaceBlendShape.MouthRight.Set(_blendShapeProxy, mouthRight);
+
+            // var stretchNormalLeft = -0.7f + 0.42f * mouthSmileLeft + 0.36f * mouthLeft;
+            // var stretchMaxLeft = -0.45f + 0.45f * mouthSmileLeft + 0.36f * mouthLeft;
+            //
+            // var stretchNormalRight = -0.7f + 0.42f * mouthSmileLeft + 0.36f * mouthLeft;
+            // var stretchMaxRight = -0.45f + 0.45f * mouthSmileLeft + 0.36f * mouthLeft;
+            //
+            // FaceBlendShape.MouthStretchLeft.Set(_blendShapeProxy, mouthLeftStretch.Remap(stretchNormalLeft, stretchMaxLeft));
+            // FaceBlendShape.MouthStretchRight.Set(_blendShapeProxy, mouthRightStretch.Remap(stretchNormalRight, stretchMaxRight));
+
+            // var uppestLip = data.PosList[0].Point;
+            //
+            // var jawRightLeft = noseTip.x - lowestChin.x;
             
-            FaceBlendShape.MouthDimpleLeft.Set(_blendShapeProxy, mouthSmileLeft * 0.5f);
-            FaceBlendShape.MouthDimpleRight.Set(_blendShapeProxy, mouthSmileRight * 0.5f);
+            // FaceBlendShape.JawLeft.Set(_blendShapeProxy,  1 - FaceBlendShape.JawLeft.RemapBlendShape(jawRightLeft));
+            // FaceBlendShape.JawRight.Set(_blendShapeProxy, jawRightLeft, true);
 
-            var mouthFrownLeft = (mouthCornerLeft - data.PosList[CanonicalPoints.MouthFrownLeft].Point).y;
-            var mouthFrownRight = (mouthCornerRight - data.PosList[CanonicalPoints.MouthFrownRight].Point).y;
+            // var lowestLip = data.PosList[CanonicalPoints.LowestLip].Point;
+            // var underLip = data.PosList[CanonicalPoints.UnderLip].Point;
+            //
+            // var outerLipDist = Vector3.Distance(lowerLip, lowestLip);
+            // var upperLipDist = Vector3.Distance(upperLip, upperOuterLip);
 
-            FaceBlendShape.MouthFrownLeft.Set(_blendShapeProxy, mouthFrownLeft);
-            FaceBlendShape.MouthFrownRight.Set(_blendShapeProxy,  mouthFrownRight);
+            // var mouthPucker = FaceBlendShape.MouthPucker.RemapBlendShape(mouthWidth);
+            // FaceBlendShape.MouthPucker.Set(_blendShapeProxy,  mouthPucker);
+            // FaceBlendShape.MouthRollLower.Set(_blendShapeProxy,  FaceBlendShape.MouthRollLower.RemapBlendShape(outerLipDist));
+            // FaceBlendShape.MouthRollUpper.Set(_blendShapeProxy,  FaceBlendShape.MouthRollUpper.RemapBlendShape(upperLipDist));
 
-            var mouthLeftStretchPoint = data.PosList[CanonicalPoints.MouthLeftStretch].Point;
-            var mouthRightStretchPoint = data.PosList[CanonicalPoints.MouthRightStretch].Point;
+            // var upperLipNoseDist = noseTip.y - uppestLip.y;
+            // FaceBlendShape.MouthShrugUpper.Set(_blendShapeProxy,  FaceBlendShape.MouthShrugUpper.RemapBlendShape(upperLipNoseDist));
+            //
+            // var overUpperLip = data.PosList[CanonicalPoints.OverUpperLip].Point;
+            // var mouthShrugLower = Vector3.Distance(lowestLip, overUpperLip);
+            //
+            // FaceBlendShape.MouthShrugLower.Set(_blendShapeProxy,  FaceBlendShape.MouthShrugLower.RemapBlendShape(mouthShrugLower));
+            //
+            // var lowerDownLeft = Vector3.Distance(data.PosList[424].Point, data.PosList[319].Point) + mouthOpenDist * 0.5f;
+            // var lowerDownRight = Vector3.Distance(data.PosList[204].Point, data.PosList[89].Point) + mouthOpenDist * 0.5f;
+            //
+            // FaceBlendShape.MouthLowerDownLeft.Set(_blendShapeProxy,  FaceBlendShape.MouthLowerDownLeft.RemapBlendShape(lowerDownLeft));
+            // FaceBlendShape.MouthLowerDownRight.Set(_blendShapeProxy,  FaceBlendShape.MouthLowerDownRight.RemapBlendShape(lowerDownRight));
+            //
+            // FaceBlendShape.MouthFunnel.Set(_blendShapeProxy, mouthPucker < 0.5f ?  FaceBlendShape.MouthFunnel.RemapBlendShape(mouthWidth) : 0);
 
-            var mouthLeftStretch = mouthCornerLeft.x - mouthLeftStretchPoint.x;
-            var mouthRightStretch = mouthCornerRight.x - mouthRightStretchPoint.x;
-            var mouthCenterLeftStretch = mouthCenter.x - mouthLeftStretchPoint.x;
-            var mouthCenterRightStretch = mouthCenter.x - mouthRightStretchPoint.x;
-
-            var mouthLeft = FaceBlendShape.MouthLeft.RemapBlendShape(mouthCenterLeftStretch);
-            var mouthRight =  FaceBlendShape.MouthRight.RemapBlendShape(mouthCenterRightStretch);
+            // var leftUpperPressIndices = CanonicalPoints.LeftUpperPress;
+            // var leftLowerPressIndices = CanonicalPoints.LeftLowerPress;
+            // var rightUpperPressIndices = CanonicalPoints.RightUpperPress;
+            // var rightLowerPressIndices = CanonicalPoints.RightLowerPress;
+            //
+            // var leftUpperPress = Vector3.Distance(data.PosList[leftUpperPressIndices[0]].Point, data.PosList[leftUpperPressIndices[1]].Point);
+            // var leftLowerPress = Vector3.Distance(data.PosList[leftLowerPressIndices[0]].Point, data.PosList[leftLowerPressIndices[1]].Point);
+            //
+            // var mouthPressLeft = (leftUpperPress + leftLowerPress) * 0.5f;
+            //
+            // var rightUpperPress = Vector3.Distance(data.PosList[rightUpperPressIndices[0]].Point, data.PosList[rightUpperPressIndices[1]].Point);
+            // var rightLowerPress = Vector3.Distance(data.PosList[rightLowerPressIndices[0]].Point, data.PosList[rightLowerPressIndices[1]].Point);
+            //
+            // var mouthPressRight = (rightUpperPress + rightLowerPress) * 0.5f;
             
-            FaceBlendShape.MouthLeft.Set(_blendShapeProxy, mouthLeft);
-            FaceBlendShape.MouthRight.Set(_blendShapeProxy, mouthRight);
+            // FaceBlendShape.MouthPressLeft.Set(_blendShapeProxy,  FaceBlendShape.MouthPressLeft.RemapBlendShape(mouthPressLeft));
+            // FaceBlendShape.MouthPressRight.Set(_blendShapeProxy,  FaceBlendShape.MouthPressRight.RemapBlendShape(mouthPressRight));
 
-            var stretchNormalLeft = -0.7f + 0.42f * mouthSmileLeft + 0.36f * mouthLeft;
-            var stretchMaxLeft = -0.45f + 0.45f * mouthSmileLeft + 0.36f * mouthLeft;
-            
-            var stretchNormalRight = -0.7f + 0.42f * mouthSmileLeft + 0.36f * mouthLeft;
-            var stretchMaxRight = -0.45f + 0.45f * mouthSmileLeft + 0.36f * mouthLeft;
-            
-            FaceBlendShape.MouthStretchLeft.Set(_blendShapeProxy, mouthLeftStretch.Remap(stretchNormalLeft, stretchMaxLeft));
-            FaceBlendShape.MouthSmileRight.Set(_blendShapeProxy, mouthRightStretch.Remap(stretchNormalRight, stretchMaxRight));
+            // LogShapeValue(FaceBlendShape.JawOpen, jawOpenRatio);
+            LogShapeValue(FaceBlendShape.MouthClose, mouthOpenDist);
+            // LogShapeValue(FaceBlendShape.MouthSmileLeft, smileLeft);
+            // LogShapeValue(FaceBlendShape.MouthSmileRight, smileRight);
+            // LogShapeValue(FaceBlendShape.MouthFrownLeft, mouthFrownLeft);
+            // LogShapeValue(FaceBlendShape.MouthFrownRight, mouthFrownRight);
+            // LogShapeValue(FaceBlendShape.MouthLeft, mouthCenterLeftStretch);
+            // LogShapeValue(FaceBlendShape.MouthRight, mouthCenterRightStretch);
+            // LogShapeValue(FaceBlendShape.MouthStretchLeft, mouthLeftStretch);
+            // LogShapeValue(FaceBlendShape.MouthStretchRight, mouthRightStretch);
+            // LogShapeValue(FaceBlendShape.JawLeft, jawRightLeft);
+            // LogShapeValue(FaceBlendShape.JawRight, jawRightLeft);
+            // LogShapeValue(FaceBlendShape.MouthPucker, mouthWidth);
+            // LogShapeValue(FaceBlendShape.MouthRollLower, outerLipDist);
+            // LogShapeValue(FaceBlendShape.MouthRollUpper, upperLipDist);
+            // LogShapeValue(FaceBlendShape.MouthShrugUpper, upperLipNoseDist);
+            // LogShapeValue(FaceBlendShape.MouthShrugLower, mouthShrugLower);
+            // LogShapeValue(FaceBlendShape.MouthLowerDownLeft, lowerDownLeft);
+            // LogShapeValue(FaceBlendShape.MouthLowerDownRight, lowerDownRight);
+            LogShapeValue(FaceBlendShape.MouthStretch, mouthWidth);
+            // LogShapeValue(FaceBlendShape.MouthPressLeft, mouthPressLeft);
+            // LogShapeValue(FaceBlendShape.MouthPressRight, mouthPressRight);
 
-            var uppestLip = data.PosList[0].Point;
+            var mouthY = 1 - FaceBlendShape.MouthClose.RemapBlendShape(mouthOpenDist);
+            var mouthX = FaceBlendShape.MouthStretch.RemapBlendShape(mouthWidth);
 
-            var jawRightLeft = noseTip.x - lowestChin.x;
-            
-            FaceBlendShape.JawLeft.Set(_blendShapeProxy,  1 - FaceBlendShape.JawLeft.RemapBlendShape(jawRightLeft));
-            FaceBlendShape.JawRight.Set(_blendShapeProxy, jawRightLeft, true);
+            var ratioI = Mathf.Clamp01(mouthX.Remap(0, 1) * 2 * mouthY.Remap(0.2f, 0.7f));
+            var ratioA = mouthY * 0.4f + mouthY * (1 - ratioI) * 0.6f;
+            var ratioU = mouthY * (1-ratioI).Remap(0, 0.3f) * 0.1f;
+            var ratioE = ratioU.Remap(0.2f, 1) * (1 - ratioI) * 0.3f;
+            var ratioO = (1-ratioI) * mouthY.Remap(0.3f, 1f) * 0.4f;
 
-            var lowestLip = data.PosList[CanonicalPoints.LowestLip].Point;
-            var underLip = data.PosList[CanonicalPoints.UnderLip].Point;
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.A), ratioA);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.E), ratioE);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.I), ratioI);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.O), ratioO);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.U), ratioU);
+        }
 
-            var outerLipDist = Vector3.Distance(lowerLip, lowestLip);
-            var upperLipDist = Vector3.Distance(upperLip, upperOuterLip);
-
-            var mouthPucker = FaceBlendShape.MouthPucker.RemapBlendShape(mouthWidth);
-            FaceBlendShape.MouthPucker.Set(_blendShapeProxy,  mouthPucker);
-            FaceBlendShape.MouthRollLower.Set(_blendShapeProxy,  FaceBlendShape.MouthRollLower.RemapBlendShape(outerLipDist));
-            FaceBlendShape.MouthRollUpper.Set(_blendShapeProxy,  FaceBlendShape.MouthRollUpper.RemapBlendShape(upperLipDist));
-
-            var upperLipNoseDist = noseTip.y - uppestLip.y;
-            FaceBlendShape.MouthShrugUpper.Set(_blendShapeProxy,  FaceBlendShape.MouthShrugUpper.RemapBlendShape(upperLipNoseDist));
-
-            var overUpperLip = data.PosList[CanonicalPoints.OverUpperLip].Point;
-            var mouthShrugLower = Vector3.Distance(lowestLip, overUpperLip);
-
-            FaceBlendShape.MouthShrugLower.Set(_blendShapeProxy,  FaceBlendShape.MouthShrugLower.RemapBlendShape(mouthShrugLower));
-
-            var lowerDownLeft = Vector3.Distance(data.PosList[424].Point, data.PosList[319].Point) + mouthOpenDist * 0.5f;
-            var lowerDownRight = Vector3.Distance(data.PosList[204].Point, data.PosList[89].Point) + mouthOpenDist * 0.5f;
-            
-            FaceBlendShape.MouthLowerDownLeft.Set(_blendShapeProxy,  FaceBlendShape.MouthLowerDownLeft.RemapBlendShape(lowerDownLeft));
-            FaceBlendShape.MouthLowerDownRight.Set(_blendShapeProxy,  FaceBlendShape.MouthLowerDownRight.RemapBlendShape(lowerDownRight));
-
-            FaceBlendShape.MouthFunnel.Set(_blendShapeProxy, mouthPucker < 0.5f ?  FaceBlendShape.MouthFunnel.RemapBlendShape(mouthWidth) : 0);
-
-            var leftUpperPressIndices = CanonicalPoints.LeftUpperPress;
-            var leftLowerPressIndices = CanonicalPoints.LeftLowerPress;
-            var rightUpperPressIndices = CanonicalPoints.RightUpperPress;
-            var rightLowerPressIndices = CanonicalPoints.RightLowerPress;
-            
-            var leftUpperPress = Vector3.Distance(data.PosList[leftUpperPressIndices[0]].Point, data.PosList[leftUpperPressIndices[1]].Point);
-            var leftLowerPress = Vector3.Distance(data.PosList[leftLowerPressIndices[0]].Point, data.PosList[leftLowerPressIndices[1]].Point);
-
-            var mouthPressLeft = (leftUpperPress + leftLowerPress) * 0.5f;
-            
-            var rightUpperPress = Vector3.Distance(data.PosList[rightUpperPressIndices[0]].Point, data.PosList[rightUpperPressIndices[1]].Point);
-            var rightLowerPress = Vector3.Distance(data.PosList[rightLowerPressIndices[0]].Point, data.PosList[rightLowerPressIndices[1]].Point);
-
-            var mouthPressRight = (rightUpperPress + rightLowerPress) * 0.5f;
-            
-            FaceBlendShape.MouthPressLeft.Set(_blendShapeProxy,  FaceBlendShape.MouthPressLeft.RemapBlendShape(mouthPressLeft));
-            FaceBlendShape.MouthPressRight.Set(_blendShapeProxy,  FaceBlendShape.MouthPressRight.RemapBlendShape(mouthPressRight));
+        private void LogShapeValue(FaceBlendShape shape, object value)
+        {
+            Debug.Log($"[BlendShapeValues] {shape} : {value}");
         }
 
         private void EyeSolve(FaceData data)

@@ -324,7 +324,7 @@ namespace VLive.Runtime.MediaPipe
             var rEar = _jointPointDict[JointIndex.RightEar.Int()];
             var nose = _jointPointDict[JointIndex.Nose.Int()];
             var head = _jointPointDict[JointIndex.Head.Int()];
-            _headPlane.Set3Points(nose.Pos3D, lEar.Pos3D, rEar.Pos3D);
+            _headPlane.Set3Points(nose.Pos3D, rEar.Pos3D, lEar.Pos3D);
             var forward = _headPlane.normal;
             var right = lEar.Pos3D - rEar.Pos3D;
             var up = Vector3.Cross(forward, right);
@@ -515,13 +515,13 @@ namespace VLive.Runtime.MediaPipe
             _jointPointDict[JointIndex.LeftEar.Int()].SetNow3D(poseData.NewPosList[1]);
             _jointPointDict[JointIndex.RightEar.Int()].SetNow3D(poseData.NewPosList[4]);
             _jointPointDict[JointIndex.Nose.Int()].SetNow3D(poseData.NewPosList[0]);
-            _jointPointDict[JointIndex.Nose.Int()].Now3D.y = _jointPointDict[JointIndex.LeftEar.Int()].Now3D.y;
+            // _jointPointDict[JointIndex.Nose.Int()].Now3D.y = _jointPointDict[JointIndex.LeftEar.Int()].Now3D.y;
             _jointPointDict[JointIndex.Neck.Int()].Now3D = (_jointPointDict[JointIndex.RightUpperArm.Int()].Now3D +
                                                             _jointPointDict[JointIndex.LeftUpperArm.Int()].Now3D) *
                                                            0.5f;
             _jointPointDict[JointIndex.Neck.Int()].Enabled = true;
-            _jointPointDict[JointIndex.Head.Int()].Now3D = (_jointPointDict[JointIndex.RightEar.Int()].Now3D +
-                                                            _jointPointDict[JointIndex.LeftEar.Int()].Now3D) * 0.5f;
+            _jointPointDict[JointIndex.Head.Int()].Now3D = (poseData.NewPosList[7].Point +
+                                                            poseData.NewPosList[8].Point) * 0.5f;
             _jointPointDict[JointIndex.Head.Int()].Enabled = true;
         }
     }

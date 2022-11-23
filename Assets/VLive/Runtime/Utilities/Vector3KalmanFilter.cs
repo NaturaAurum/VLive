@@ -27,9 +27,11 @@ namespace VLive.Runtime.Utilities
                     joint.y,
                     joint.z
                 }
-            );
+            )
+            {
+                ProcessNoise = ConstantVelocity3DModel.GetProcessNoise(noise, timeInterval)
+            };
 
-            _kalmanFilter.ProcessNoise = ConstantVelocity3DModel.GetProcessNoise(noise, timeInterval);
             _kalmanFilter.MeasurementNoise = MatrixFunctions.Diagonal(_kalmanFilter.MeasurementVectorDimension, 1.0);
             _kalmanFilter.MeasurementMatrix = ConstantVelocity3DModel.GetPositionMeasurementMatrix();
             _kalmanFilter.TransitionMatrix = ConstantVelocity3DModel.GetTransitionMatrix(timeInterval);
@@ -43,9 +45,9 @@ namespace VLive.Runtime.Utilities
             _effectiveCount = 0;
         }
 
-        public void Correct(Vector3 v) => _kalmanFilter.Correct(v);
-        public void Predict() => _kalmanFilter.Predict();
-        public Vector3 GetPosition() => _kalmanFilter.State.Position;
+        private void Correct(Vector3 v) => _kalmanFilter.Correct(v);
+        private void Predict() => _kalmanFilter.Predict();
+        private Vector3 GetPosition() => _kalmanFilter.State.Position;
 
         public Vector3 CorrectAndPredict(Vector3 v)
         {
