@@ -33,8 +33,6 @@ namespace VLive.Runtime.MediaPipe
         private Transform _leftHand;
         private Transform _rightHand;
 
-        private readonly List<Vector3KalmanFilter> _leftKalmanFilters = new();
-        private readonly List<Vector3KalmanFilter> _rightKalmanFilters = new();
         private readonly List<OneEuroFilter<Vector3>> _leftOneEuroFilters = new();
         private readonly List<OneEuroFilter<Vector3>> _rightOneEuroFilters = new();
 
@@ -66,8 +64,6 @@ namespace VLive.Runtime.MediaPipe
             {
                 _leftOneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
                 _rightOneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
-                _leftKalmanFilters.Add( new Vector3KalmanFilter(KalmanTimeInterval, KalmanNoise));
-                _rightKalmanFilters.Add( new Vector3KalmanFilter(KalmanTimeInterval, KalmanNoise));
             }
         }
 
@@ -96,7 +92,6 @@ namespace VLive.Runtime.MediaPipe
             {
                 data.LeftPosList = data.LeftPosList.Select((point, index) =>
                 {
-                    point.Point = _leftKalmanFilters[index].CorrectAndPredict(point.Point);
                     point.Point = _leftOneEuroFilters[index].Filter(point.Point);
                     return point;
                 }).ToList();
@@ -112,7 +107,6 @@ namespace VLive.Runtime.MediaPipe
             {
                 data.RightPosList = data.RightPosList.Select((point, index) =>
                 {
-                    point.Point = _rightKalmanFilters[index].CorrectAndPredict(point.Point);
                     point.Point = _rightOneEuroFilters[index].Filter(point.Point);
                     return point;
                 }).ToList();

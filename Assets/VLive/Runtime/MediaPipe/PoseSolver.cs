@@ -11,7 +11,6 @@ namespace VLive.Runtime.MediaPipe
     {
         private Animator _animator;
         private readonly Dictionary<int, JointPoint> _jointPointDict = new();
-        private readonly List<JointKalmanFilter> _kalmanFilters = new();
         private readonly List<OneEuroFilter<Vector3>> _oneEuroFilters = new();
         
         private const double KalmanTimeInterval = 0.45;
@@ -55,7 +54,6 @@ namespace VLive.Runtime.MediaPipe
                 // }
 
                 _jointPointDict.Add(id, jointPoint);
-                _kalmanFilters.Add(new JointKalmanFilter(KalmanTimeInterval, KalmanNoise));
                 _oneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
             }
         }
@@ -253,19 +251,11 @@ namespace VLive.Runtime.MediaPipe
             SetLegJoints(data);
             SolveHead(data);
             SetBodyJoints(data);
-            UpdateKalmanFilter();
             UpdateOneEuroFilter();
             UpdateJoints(data, forward);
         }
 
-        private void UpdateKalmanFilter()
-        {
-            for (var i = 0; i < _jointPointDict.Values.Count; i++)
-            {
-                var jointPoint = _jointPointDict.Values.ElementAt(i);
-                jointPoint.Now3D = _kalmanFilters[i].CorrectAndPredict(jointPoint);
-            }
-        }
+        
 
         private void UpdateOneEuroFilter()
         {

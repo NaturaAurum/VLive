@@ -23,7 +23,6 @@ namespace VLive.Runtime.MediaPipe
         
         private ToggleModel PointToggle => StaticModels.Instance.PointToggle;
         
-        private readonly List<Vector3KalmanFilter> _kalmanFilters = new();
         private readonly List<OneEuroFilter<Vector3>> _oneEuroFilters = new();
         
         private const double KalmanTimeInterval = 0.45;
@@ -47,14 +46,12 @@ namespace VLive.Runtime.MediaPipe
             {
                 for (var i = 0; i < pose.NewPosList.Count; i++)
                 {
-                    _kalmanFilters.Add(new Vector3KalmanFilter(KalmanTimeInterval, KalmanNoise));
                     _oneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
                 }
                 _isFilterInitialized = true;
             }
             foreach (var euro in pose.NewPosList
                                      .Where(pointData => pointData.Visibility >= 0.75f)
-                                     .Select(pointData => _kalmanFilters[index].CorrectAndPredict(pointData.Point))
                                      .Select(kalman => _oneEuroFilters[index].Filter(kalman)))
             {
                 Draw(euro, poseScale);
