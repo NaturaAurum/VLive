@@ -119,7 +119,7 @@ namespace VLive.Runtime.MediaPipe
         private const float Beta = 0.85f;
         private const float Frequency = 60f;
 
-        private List<OneEuroFilter<Vector3>> _filters = new();
+        private List<Vector3OneEuroFilter> _filters = new();
 
         private bool _initFilters = false;
 
@@ -143,7 +143,7 @@ namespace VLive.Runtime.MediaPipe
             {
                 for(var i = 0; i < data.PosList.Count; ++i)
                 {
-                    _filters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
+                    _filters.Add(new Vector3OneEuroFilter(Frequency, MinCutOffValue, Beta, DCutOffValue));
                 }
 
                 _initFilters = true;

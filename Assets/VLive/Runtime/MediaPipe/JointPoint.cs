@@ -29,7 +29,7 @@ namespace VLive.Runtime.MediaPipe
         Spine = 7,
         RightShoulder = 12,
         LeftShoulder = 11,
-        Chest = 8,
+        Chest = 54,
         LeftEar = 100,
         RightEar = 101,
         Nose = 102,

@@ -171,7 +171,69 @@ namespace VLive.Runtime.Utilities
 
             return CurrValue;
         }
-    };
+    }
+
+    public class Vector3OneEuroFilter
+    {
+        private readonly OneEuroFilter[] _oneEuroFilters;
+
+        // filter parameters
+        public float Freq
+        {
+            get;
+        }
+        public float MinCutOff
+        {
+            get;
+        }
+        public float Beta
+        {
+            get;
+        }
+        public float DCutOff
+        {
+            get;
+        }
+
+        // currValue contains the latest value which have been succesfully filtered
+        // prevValue contains the previous filtered value
+        public Vector3 CurrValue
+        {
+            get;
+            private set;
+        }
+        public Vector3 PrevValue
+        {
+            get;
+            private set;
+        }
+        
+        public Vector3OneEuroFilter(float freq, float minCutOff = 1.0f, float beta = 0.0f, float dCutOff = 1.0f)
+        {
+            CurrValue = Vector3.zero;
+            PrevValue = Vector3.zero;
+            Freq = freq;
+            MinCutOff = minCutOff;
+            Beta = beta;
+            DCutOff = dCutOff;
+            _oneEuroFilters = new OneEuroFilter[3];
+            for (var i = 0; i < _oneEuroFilters.Length; i++)
+                _oneEuroFilters[i] = new OneEuroFilter(Freq, MinCutOff, Beta, DCutOff);
+        }
+        
+        public Vector3 Filter(Vector3 value, float timestamp = -1.0f)
+        {
+            PrevValue = CurrValue;
+            var output = Vector3.zero;
+            var input = value;
+
+            for (var i = 0; i < _oneEuroFilters.Length; i++)
+                output[i] = _oneEuroFilters[i].Filter(input[i], timestamp);
+
+            CurrValue = output;
+            return CurrValue;
+        }
+    }
 
 
     // this class instantiates an array of OneEuroFilter objects to filter each component of Vector2, Vector3, Vector4 or Quaternion types
@@ -243,14 +305,14 @@ namespace VLive.Runtime.Utilities
         {
             PrevValue = CurrValue;
 
-            if (typeof(TU) != _type)
-            {
-                Debug.LogError("WARNING! " + typeof(TU) + " when " + _type +
-                               " is expected!\nReturning previous filtered value");
-                CurrValue = PrevValue;
-
-                return (T)Convert.ChangeType(CurrValue, typeof(T));
-            }
+            // if (typeof(TU) != _type)
+            // {
+            //     Debug.LogError("WARNING! " + typeof(TU) + " when " + _type +
+            //                    " is expected!\nReturning previous filtered value");
+            //     CurrValue = PrevValue;
+            //
+            //     return (T)Convert.ChangeType(CurrValue, typeof(T));
+            // }
 
             if (_type == typeof(Vector2))
             {

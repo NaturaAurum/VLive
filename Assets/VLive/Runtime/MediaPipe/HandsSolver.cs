@@ -33,8 +33,8 @@ namespace VLive.Runtime.MediaPipe
         private Transform _leftHand;
         private Transform _rightHand;
 
-        private readonly List<OneEuroFilter<Vector3>> _leftOneEuroFilters = new();
-        private readonly List<OneEuroFilter<Vector3>> _rightOneEuroFilters = new();
+        private readonly List<Vector3OneEuroFilter> _leftOneEuroFilters = new();
+        private readonly List<Vector3OneEuroFilter> _rightOneEuroFilters = new();
 
         private const double KalmanTimeInterval = 0.45;
         private const double KalmanNoise = 0.4;
@@ -62,8 +62,8 @@ namespace VLive.Runtime.MediaPipe
             InitializeFingerLocalCoord(ref _rightFingerLocalCoords, Right);
             for (var i = 0; i < 21; ++i)
             {
-                _leftOneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
-                _rightOneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
+                _leftOneEuroFilters.Add(new Vector3OneEuroFilter(Frequency, MinCutOffValue, Beta, DCutOffValue));
+                _rightOneEuroFilters.Add(new Vector3OneEuroFilter(Frequency, MinCutOffValue, Beta, DCutOffValue));
             }
         }
 
@@ -169,18 +169,17 @@ namespace VLive.Runtime.MediaPipe
             var upDir = rightHand ? _handPlane.normal : _handPlane.flipped.normal;
             var forwardDir = Vector3.Cross(rightDir, upDir);
             var handMatrix = new Matrix4x4(rightHand ? rightDir : -rightDir, upDir, rightHand ? forwardDir : -forwardDir, RightColumn);
-            
-            // lower arm
+           
+            // // lower arm
             var dir = hand.localPosition;
             var lowerArm = hand.transform.parent;
-            var angle = Vector3.Angle(lowerArm.up, handMatrix.rotation * Vector3.up);
-            angle = Mathf.Repeat(rightHand ? -angle : angle, 360);
-            var lowerArmRot = Quaternion.AngleAxis(angle, dir);
-            var rotation = lowerArm.rotation;
-            lowerArmRot = rotation * lowerArmRot;
-            // rotation = Quaternion.Slerp(rotation, lowerArmRot, Smooth * Time.deltaTime);
-            lowerArm.rotation = lowerArmRot;
+            var lowerArmRot = lowerArm.rotation;
+            var right = lowerArm.right;
+            var angle = Vector3.SignedAngle(lowerArm.up, upDir, rightHand ? rightDir : -rightDir);
+            var lowerArmTargetRot = Quaternion.AngleAxis(rightHand ? angle : -angle, dir);
+            lowerArm.rotation = lowerArmRot * lowerArmTargetRot;
             hand.rotation = handMatrix.rotation;
+            
         }
 
         private const float Smooth = 10f;

@@ -15,6 +15,8 @@ namespace VLive.Runtime.MediaPipe
         [SerializeField]
         private float poseScale;
         [SerializeField]
+        private float posePointScale;
+        [SerializeField]
         private float faceScale;
         [SerializeField]
         private float handPointScale;
@@ -23,7 +25,7 @@ namespace VLive.Runtime.MediaPipe
         
         private ToggleModel PointToggle => StaticModels.Instance.PointToggle;
         
-        private readonly List<OneEuroFilter<Vector3>> _oneEuroFilters = new();
+        private readonly List<Vector3OneEuroFilter> _oneEuroFilters = new();
         
         private const double KalmanTimeInterval = 0.45;
         private const double KalmanNoise = 0.4;
@@ -46,13 +48,13 @@ namespace VLive.Runtime.MediaPipe
             {
                 for (var i = 0; i < pose.NewPosList.Count; i++)
                 {
-                    _oneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
+                    _oneEuroFilters.Add(new Vector3OneEuroFilter(Frequency, MinCutOffValue, Beta, DCutOffValue));
                 }
                 _isFilterInitialized = true;
             }
             foreach (var euro in pose.NewPosList
                                      .Where(pointData => pointData.Visibility >= 0.75f)
-                                     .Select(kalman => _oneEuroFilters[index].Filter(kalman)))
+                                     .Select(kalman => _oneEuroFilters[index].Filter(kalman.Point)))
             {
                 Draw(euro, poseScale);
                 index++;

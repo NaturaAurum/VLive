@@ -11,7 +11,7 @@ namespace VLive.Runtime.MediaPipe
     {
         private Animator _animator;
         private readonly Dictionary<int, JointPoint> _jointPointDict = new();
-        private readonly List<OneEuroFilter<Vector3>> _oneEuroFilters = new();
+        private readonly List<Vector3OneEuroFilter> _oneEuroFilters = new();
         
         private const double KalmanTimeInterval = 0.45;
         private const double KalmanNoise = 0.4;
@@ -54,7 +54,7 @@ namespace VLive.Runtime.MediaPipe
                 // }
 
                 _jointPointDict.Add(id, jointPoint);
-                _oneEuroFilters.Add(new OneEuroFilter<Vector3>(Frequency, MinCutOffValue, Beta, DCutOffValue));
+                _oneEuroFilters.Add(new Vector3OneEuroFilter(Frequency, MinCutOffValue, Beta, DCutOffValue));
             }
         }
         
@@ -288,7 +288,7 @@ namespace VLive.Runtime.MediaPipe
             var chest = _jointPointDict[JointIndex.Chest.Int()];
             if (chest.Enabled)
             {
-                LookAt(JointIndex.Spine, JointIndex.Chest, forwardUpperVec);
+                // LookAt(JointIndex.Spine, JointIndex.Chest, forwardUpperVec);
                 LookAt(JointIndex.Chest, JointIndex.Neck, forwardUpperVec);
             }
 
