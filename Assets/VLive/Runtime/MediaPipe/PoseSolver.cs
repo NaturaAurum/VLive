@@ -213,10 +213,17 @@ namespace VLive.Runtime.MediaPipe
             if (ReferenceEquals(curr.Transform, null))
                 return;
             var child = _jointPointDict[childId];
-            if (!child.Enabled)
+            if (!child.Visible)
             {
                 // curr.Transform.rotation = curr.InitRotation;
                 return;
+            }
+
+            if (id == JointIndex.Chest.Int())
+            {
+                var position = curr.Transform.position;
+                Debug.DrawRay(position, curr.Pos3D - child.Pos3D);
+                Debug.DrawRay(position, upWords);
             }
 
             curr.Transform.rotation = Quaternion.LookRotation(curr.Pos3D - child.Pos3D, upWords) * curr.InverseRotation;
@@ -286,7 +293,7 @@ namespace VLive.Runtime.MediaPipe
             // rightAngle < 100.0f
 
             var chest = _jointPointDict[JointIndex.Chest.Int()];
-            if (chest.Enabled)
+            if (chest.Visible)
             {
                 // LookAt(JointIndex.Spine, JointIndex.Chest, forwardUpperVec);
                 LookAt(JointIndex.Chest, JointIndex.Neck, forwardUpperVec);
@@ -304,35 +311,15 @@ namespace VLive.Runtime.MediaPipe
                 rightLowerVec, forwardLowerVec);
             UpdateLegJoints(JointIndex.RightThigh, JointIndex.RightShin, JointIndex.RightFoot, JointIndex.RightToe,
                 rightLowerVec, forwardLowerVec);
-            
-            UpdateHeadJoints();
         }
 
-        private void UpdateHeadJoints()
-        {
-            var lEar = _jointPointDict[JointIndex.LeftEar.Int()];
-            var rEar = _jointPointDict[JointIndex.RightEar.Int()];
-            var nose = _jointPointDict[JointIndex.Nose.Int()];
-            var head = _jointPointDict[JointIndex.Head.Int()];
-            _headPlane.Set3Points(nose.Pos3D, rEar.Pos3D, lEar.Pos3D);
-            var forward = _headPlane.normal;
-            var right = lEar.Pos3D - rEar.Pos3D;
-            var up = Vector3.Cross(forward, right);
-
-            var position = head.Transform.position;
-            Debug.DrawRay(position, forward, Color.blue, 0.5f);
-            Debug.DrawRay(position, up, Color.green, 0.5f);
-            Debug.DrawRay(position, right, Color.red, 0.5f);
-            
-        }
-        
         private void UpdateArmJoints(JointIndex upper, JointIndex lower, JointIndex hand, JointIndex thumb,
-            JointIndex mid, JointIndex shoulder, Vector3 forward, ref Vector3 upperForward, ref Vector3 lowerForward)
+                                     JointIndex mid, JointIndex shoulder, Vector3 forward, ref Vector3 upperForward, ref Vector3 lowerForward)
         {
-            if (_jointPointDict[hand.Int()].Enabled)
+            if (_jointPointDict[hand.Int()].Visible)
             {
                 // var isLeft = upper.ToString().StartsWith(LeftString);
-                if (_jointPointDict[shoulder.Int()].Enabled)
+                if (_jointPointDict[shoulder.Int()].Visible)
                 {
                     LookAt(shoulder, upper, forward);
                 }

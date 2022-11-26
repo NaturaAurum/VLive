@@ -8,18 +8,18 @@ namespace VLive.Runtime.Extensions
     {
         private static Dictionary<FaceBlendShape, (float min, float max)> _blendShapeMinMaxDict = new()
         {
-            // {
-            //     FaceBlendShape.EyeBlinkLeft, (0.40f, 0.70f)
-            // },
+            {
+                FaceBlendShape.EyeBlinkLeft, (0.40f, 0.70f)
+            },
             // {
             //     FaceBlendShape.EyeSquintLeft, (0.37f, 0.44f)
             // },
             // {
             //     FaceBlendShape.EyeWideLeft, (0.9f, 1.2f)
             // },
-            // {
-            //     FaceBlendShape.EyeBlinkRight, (0.40f, 0.70f)
-            // },
+            {
+                FaceBlendShape.EyeBlinkRight, (0.40f, 0.70f)
+            },
             // {
             //     FaceBlendShape.EyeSquintRight, (0.37f, 0.44f)
             // },
@@ -50,7 +50,7 @@ namespace VLive.Runtime.Extensions
             // {FaceBlendShape.MouthLowerDownRight, (1.7f, 2.1f)},
             // {FaceBlendShape.BrowDownLeft, (1.0f, 1.2f)},
             // {FaceBlendShape.BrowDownRight, (1.0f, 1.2f)},
-            // {FaceBlendShape.BrowInnerUp, (2.2f, 2.6f)},
+            {FaceBlendShape.BrowInnerUp, (0.35f, 0.4f)},
             // {FaceBlendShape.BrowOuterUpLeft, (1.25f, 1.5f)},
             // {FaceBlendShape.BrowOuterUpRight, (1.25f, 1.5f)},
             // {FaceBlendShape.CheekSquintLeft, (0.55f, 0.63f)},

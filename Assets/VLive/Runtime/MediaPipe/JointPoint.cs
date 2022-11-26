@@ -63,7 +63,8 @@ namespace VLive.Runtime.MediaPipe
 
     public class JointPoint
     {
-        public bool Enabled;
+        public bool Enabled = true;
+        public bool Visible;
         public Vector3 Pos3D;
         public Vector3 Now3D;
 
@@ -80,11 +81,8 @@ namespace VLive.Runtime.MediaPipe
 
         public void SetNow3D(PointData pointData)
         {
-            Enabled = pointData.Visibility >= VisibleThreshold;
-            if (Enabled)
-            {
-                Now3D = pointData.Point;
-            }
+            Now3D = pointData.Point;
+            Visible = pointData.Visibility >= VisibleThreshold;
         }
     }
 }

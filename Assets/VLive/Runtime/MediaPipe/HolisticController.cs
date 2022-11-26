@@ -296,13 +296,18 @@ namespace VLive.Runtime.MediaPipe
             var faceValid = _faceLandmarks.IsValid();
             if (faceValid)
             {
-                _faceData.PosList = _faceLandmarks.Landmark.Select(lm =>
+                // _faceData.PosList = _faceLandmarks.Landmark.Select(lm =>
+                // {
+                //     var pointData = lm.ToVector3();
+                //     var pt = pointData.Point;
+                //     pt.y *= -1;
+                //     pointData.Point = pt;
+                //     return pointData;
+                // }).ToList();
+                _faceData.PosList = _faceLandmarks.Landmark.ToVector3List(_screenRect).Select(point =>
                 {
-                    var pointData = lm.ToVector3();
-                    var pt = pointData.Point;
-                    pt.y *= -1;
-                    pointData.Point = pt;
-                    return pointData;
+                    point.Point = Vector3.Scale(point.Point, Vector3.one * 0.01f);
+                    return point;
                 }).ToList();
                 _faceData.Origin = _faceLandmarks;
             }

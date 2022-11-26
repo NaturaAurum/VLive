@@ -123,6 +123,12 @@ namespace VLive.Runtime.MediaPipe
 
         private bool _initFilters = false;
 
+        private Animator _animator;
+
+        private Transform _head;
+
+        private const string BrowName = "Face.M_F00_000_00_Fcl_BRW_Joy";
+
         private void Awake()
         {
             _blendShapeProxy = GetComponent<VRMBlendShapeProxy>();
@@ -130,6 +136,9 @@ namespace VLive.Runtime.MediaPipe
             var blendShapeAvatar = _blendShapeProxy.BlendShapeAvatar;
             // 대충 52개 이상이면 있는걸로
             _isPerfectSync = blendShapeAvatar.Clips.Count >= 52;
+
+            _animator = GetComponent<Animator>();
+            _head = _animator.GetBoneTransform(HumanBodyBones.Head);
         }
 
         public void Solve(FaceData data)
@@ -154,7 +163,8 @@ namespace VLive.Runtime.MediaPipe
                 point.Point = _filters[index].Filter(point.Point);
                 return point;
             }).ToList();
-            
+
+            HeadRotationSolve(data);
             MouthSolve(data);
             EyeSolve(data);
             _blendShapeProxy.Apply();
@@ -164,7 +174,22 @@ namespace VLive.Runtime.MediaPipe
 
         private void HeadRotationSolve(FaceData data)
         {
-            
+            var p1 = data.PosList[21].Point;
+            var p2 = data.PosList[251].Point;
+            var bottomCenter = Vector3.Lerp(data.PosList[397].Point, data.PosList[172].Point, 0.5f);
+            var facePlane = new Plane(p1, p2, bottomCenter);
+            var upCenter = Vector3.Lerp(p1, p2, 0.5f);
+            var mid = upCenter - bottomCenter;
+            var forward = facePlane.normal;
+            var right = Vector3.Cross(forward, mid);
+
+            var position = _head.position;
+            Debug.DrawRay(position, -right, Color.red);
+            Debug.DrawRay(position, mid, Color.green);
+            Debug.DrawRay(position, forward, Color.blue);
+
+            var headMatrix = new Matrix4x4(-right, mid, forward, new Vector4(0, 0, 0, 1));
+            _head.rotation = headMatrix.rotation;
         }
 
         private void MouthSolve(FaceData data)
@@ -319,7 +344,7 @@ namespace VLive.Runtime.MediaPipe
             // FaceBlendShape.MouthPressRight.Set(_blendShapeProxy,  FaceBlendShape.MouthPressRight.RemapBlendShape(mouthPressRight));
 
             // LogShapeValue(FaceBlendShape.JawOpen, jawOpenRatio);
-            LogShapeValue(FaceBlendShape.MouthClose, mouthOpenDist);
+            // LogShapeValue(FaceBlendShape.MouthClose, mouthOpenDist);
             // LogShapeValue(FaceBlendShape.MouthSmileLeft, smileLeft);
             // LogShapeValue(FaceBlendShape.MouthSmileRight, smileRight);
             // LogShapeValue(FaceBlendShape.MouthFrownLeft, mouthFrownLeft);
@@ -337,7 +362,7 @@ namespace VLive.Runtime.MediaPipe
             // LogShapeValue(FaceBlendShape.MouthShrugLower, mouthShrugLower);
             // LogShapeValue(FaceBlendShape.MouthLowerDownLeft, lowerDownLeft);
             // LogShapeValue(FaceBlendShape.MouthLowerDownRight, lowerDownRight);
-            LogShapeValue(FaceBlendShape.MouthStretch, mouthWidth);
+            // LogShapeValue(FaceBlendShape.MouthStretch, mouthWidth);
             // LogShapeValue(FaceBlendShape.MouthPressLeft, mouthPressLeft);
             // LogShapeValue(FaceBlendShape.MouthPressRight, mouthPressRight);
 
@@ -364,14 +389,51 @@ namespace VLive.Runtime.MediaPipe
 
         private void EyeSolve(FaceData data)
         {
-            if (_isPerfectSync)
-            {
-                // TODO
-            }
-            else
-            {
-                // TODO
-            }
+            // if (_isPerfectSync)
+            // {
+            //     // TODO
+            // }
+            // else
+            // {
+            //     // TODO
+            // }
+
+            var eyeOpenRatioLeft = GetEyeOpenRation(data, CanonicalPoints.EyeLeft);
+            var eyeOpenRatioRight = GetEyeOpenRation(data, CanonicalPoints.EyeRight);
+
+            var blinkLeft = 1 - FaceBlendShape.EyeBlinkLeft.RemapBlendShape(eyeOpenRatioLeft);
+            var blinkRight = 1 - FaceBlendShape.EyeBlinkRight.RemapBlendShape(eyeOpenRatioRight);
+            LogShapeValue(FaceBlendShape.EyeBlinkLeft, eyeOpenRatioLeft);
+            LogShapeValue(FaceBlendShape.EyeBlinkRight, eyeOpenRatioRight);
+            
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), blinkLeft);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), blinkRight);
+
+            var innerBrow = data.PosList[CanonicalPoints.InnerBrow].Point;
+            var upperNose = data.PosList[CanonicalPoints.UpperNose].Point;
+            var innerBrowDist = Vector3.Distance(upperNose, innerBrow);
+            Debug.Log($"[BlendShapeValues] Inner Brow Dist : ${innerBrowDist}");
+            var innerBrowRemap = FaceBlendShape.BrowInnerUp.RemapBlendShape(innerBrowDist);
+            LogShapeValue(FaceBlendShape.BrowInnerUp, innerBrowRemap);
+            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateUnknown(BrowName), innerBrowRemap);
+        }
+
+        private float GetEyeOpenRation(FaceData data, int[] eyePoints)
+        {
+            var eyeDis = GetEyeLidDis(data, eyePoints);
+            Debug.Log($"[BlendShapeValues] eye dis : ${eyeDis}");
+            const float maxRatio = 0.285f;
+            return Mathf.Clamp(eyeDis / maxRatio, 0, 2);
+        }
+
+        private float GetEyeLidDis(FaceData data, int[] eyePoints)
+        {
+            var eyeWidth = Vector3.Distance(data.PosList[eyePoints[0]].Point, data.PosList[eyePoints[1]].Point);
+            var eyeOuterLid = Vector3.Distance(data.PosList[eyePoints[2]].Point, data.PosList[eyePoints[5]].Point);
+            var eyeMidLid = Vector3.Distance(data.PosList[eyePoints[3]].Point, data.PosList[eyePoints[6]].Point);
+            var eyeInnerLid = Vector3.Distance(data.PosList[eyePoints[4]].Point, data.PosList[eyePoints[7]].Point);
+            var eyeLidAvg = (eyeOuterLid + eyeMidLid + eyeInnerLid) / 3f;
+            return eyeLidAvg / eyeWidth;
         }
     }
 }
