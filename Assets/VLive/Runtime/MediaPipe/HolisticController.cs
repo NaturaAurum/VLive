@@ -2,10 +2,11 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using Mediapipe;
 using Mediapipe.Unity;
 using Mediapipe.Unity.Holistic;
-using UniRx;
 using UnityEngine;
 using VLive.Runtime.Extensions;
 using VLive.Runtime.Models;
@@ -64,12 +65,107 @@ namespace VLive.Runtime.MediaPipe
             _textureFramePool = GetComponent<TextureFramePool>();
             _holisticGraphRunner = GetComponent<HolisticTrackingGraph>();
             _screenRect = screen.GetComponent<RectTransform>();
+            UniTaskAsyncEnumerable
+                .EveryUpdate(PlayerLoopTiming.PostLateUpdate)
+                .Subscribe(OnLateUpdate)
+                .AddTo(this.GetCancellationTokenOnDestroy());
+        }
+        
+        private void OnLateUpdate(AsyncUnit _)
+        {
+            var poseVisible = _poseLandmarks.IsValid() && _poseWorldLandmarks.IsValid();
+            var modelRot = receiver.transform.rotation;
+            modelRot *= Quaternion.Euler(0, 180, 0);
+            if (!poseVisible)
+            {
+                _poseData.NewPosList.Clear();
+            }
+            else
+            {
+                var pose2D = _poseLandmarks.Landmark;
+                var pose3D = _poseWorldLandmarks.Landmark;
+
+                var pose2 = pose2D.ToVector3List(_screenRect);
+                var pose3 = pose3D.ToVector3List(_screenRect, 1.3f);
+                _poseData.NewPosList = pose2.Select((point, index) =>
+                {
+                    var point2D = point.Point;
+                    point2D = Vector3.Scale(point.Point, Vector3.one * 0.01f);
+                    var point3D = pose3[index].Point;
+                    point2D.z = point3D.z;
+                    // point2D.y = -point2D.y;
+                    // point2D.y += 5.7f;
+                    point2D.x += 2.4f;
+                    point.Point = point2D;
+                    return point;
+                }).ToList();
+                // _poseData.NewPosList = pose3.Select(point =>
+                // {
+                //     var pt = point.Point;
+                //     pt.x += Vector3.left.x;
+                //     point.Point = pt;
+                //     return point;
+                // }).ToList();
+                _poseData.NewPosList = _poseData.NewPosList.Select(point => point.ApplyRotation(modelRot)).ToList();
+            }
+
+            var leftHandValid = _leftHandLandmarks.IsValid();
+            var rightHandValid = _rightHandLandmarks.IsValid();
+
+            if (leftHandValid)
+            {
+                _handsData.LeftPosList = _leftHandLandmarks.Landmark.ToVector3List(_screenRect);
+                // _handsData.LeftPosList = _handsData.LeftPosList.Select(point => point.ApplyRotation(Quaternion.Euler(0, 180, 0))).ToList();
+            }
+            else
+            {
+                _handsData.LeftPosList.Clear();
+            }
+
+            if (rightHandValid)
+            {
+                _handsData.RightPosList = _rightHandLandmarks.Landmark.ToVector3List(_screenRect);
+                // _handsData.RightPosList = _handsData.RightPosList.Select(point => point.ApplyRotation(Quaternion.Euler(0, 180, 0))).ToList();
+            }
+            else
+            {
+                _handsData.RightPosList.Clear();
+            }
+
+            var faceValid = _faceLandmarks.IsValid();
+            if (faceValid)
+            {
+                // _faceData.PosList = _faceLandmarks.Landmark.Select(lm =>
+                // {
+                //     var pointData = lm.ToVector3();
+                //     var pt = pointData.Point;
+                //     pt.y *= -1;
+                //     pointData.Point = pt;
+                //     return pointData;
+                // }).ToList();
+                _faceData.PosList = _faceLandmarks.Landmark.ToVector3List(_screenRect).Select(point =>
+                {
+                    point.Point = Vector3.Scale(point.Point, Vector3.one * 0.01f);
+                    return point;
+                }).ToList();
+                _faceData.Origin = _faceLandmarks;
+            }
+            else
+            {
+                _faceData.PosList.Clear();
+            }
+            receiver.SolvePose(_poseData);
+            receiver.SolveHand(_handsData);
+            
+            receiver.SolveFace(_faceData);
+            landmarkDrawer.Draw(_poseData, _faceData, _handsData);
         }
 
         private IEnumerator Start()
         {
             yield return InitSettings();
-            PointToggle.Toggle.Subscribe(Toggle).AddTo(this);
+            Toggle(false);
+            PointToggle.Subscribe(Toggle).AddTo(this.GetCancellationTokenOnDestroy());
             yield return Run();
         }
 
@@ -230,96 +326,6 @@ namespace VLive.Runtime.MediaPipe
 
             Protobuf.ResetLogHandler();
             Logger.SetLogger(null);
-        }
-
-        private void LateUpdate()
-        {
-            var poseVisible = _poseLandmarks.IsValid() && _poseWorldLandmarks.IsValid();
-            var modelRot = receiver.transform.rotation;
-            modelRot *= Quaternion.Euler(0, 180, 0);
-            if (!poseVisible)
-            {
-                _poseData.NewPosList.Clear();
-            }
-            else
-            {
-                var pose2D = _poseLandmarks.Landmark;
-                var pose3D = _poseWorldLandmarks.Landmark;
-
-                var pose2 = pose2D.ToVector3List(_screenRect);
-                var pose3 = pose3D.ToVector3List(_screenRect, 1.3f);
-                _poseData.NewPosList = pose2.Select((point, index) =>
-                {
-                    var point2D = point.Point;
-                    point2D = Vector3.Scale(point.Point, Vector3.one * 0.01f);
-                    var point3D = pose3[index].Point;
-                    point2D.z = point3D.z;
-                    // point2D.y = -point2D.y;
-                    // point2D.y += 5.7f;
-                    point2D.x += 2.4f;
-                    point.Point = point2D;
-                    return point;
-                }).ToList();
-                // _poseData.NewPosList = pose3.Select(point =>
-                // {
-                //     var pt = point.Point;
-                //     pt.x += Vector3.left.x;
-                //     point.Point = pt;
-                //     return point;
-                // }).ToList();
-                _poseData.NewPosList = _poseData.NewPosList.Select(point => point.ApplyRotation(modelRot)).ToList();
-            }
-
-            var leftHandValid = _leftHandLandmarks.IsValid();
-            var rightHandValid = _rightHandLandmarks.IsValid();
-
-            if (leftHandValid)
-            {
-                _handsData.LeftPosList = _leftHandLandmarks.Landmark.ToVector3List(_screenRect);
-                // _handsData.LeftPosList = _handsData.LeftPosList.Select(point => point.ApplyRotation(Quaternion.Euler(0, 180, 0))).ToList();
-            }
-            else
-            {
-                _handsData.LeftPosList.Clear();
-            }
-
-            if (rightHandValid)
-            {
-                _handsData.RightPosList = _rightHandLandmarks.Landmark.ToVector3List(_screenRect);
-                // _handsData.RightPosList = _handsData.RightPosList.Select(point => point.ApplyRotation(Quaternion.Euler(0, 180, 0))).ToList();
-            }
-            else
-            {
-                _handsData.RightPosList.Clear();
-            }
-
-            var faceValid = _faceLandmarks.IsValid();
-            if (faceValid)
-            {
-                // _faceData.PosList = _faceLandmarks.Landmark.Select(lm =>
-                // {
-                //     var pointData = lm.ToVector3();
-                //     var pt = pointData.Point;
-                //     pt.y *= -1;
-                //     pointData.Point = pt;
-                //     return pointData;
-                // }).ToList();
-                _faceData.PosList = _faceLandmarks.Landmark.ToVector3List(_screenRect).Select(point =>
-                {
-                    point.Point = Vector3.Scale(point.Point, Vector3.one * 0.01f);
-                    return point;
-                }).ToList();
-                _faceData.Origin = _faceLandmarks;
-            }
-            else
-            {
-                _faceData.PosList.Clear();
-            }
-            receiver.SolvePose(_poseData);
-            receiver.SolveHand(_handsData);
-            
-            receiver.SolveFace(_faceData);
-            landmarkDrawer.Draw(_poseData, _faceData, _handsData);
         }
     }
 }

@@ -1,6 +1,6 @@
-using System;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using TMPro;
-using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 using VLive.Runtime.Models;
@@ -26,8 +26,8 @@ namespace VLive.Runtime.Presenters
 
         private void Start()
         {
-            _button.OnClickAsObservable().Subscribe(OnButtonClicked).AddTo(this);
-            Toggle.Toggle.Subscribe(OnToggle).AddTo(this);
+            _button.OnClickAsAsyncEnumerable().Subscribe(OnButtonClicked).AddTo(this.GetCancellationTokenOnDestroy());
+            Toggle.Subscribe(OnToggle).AddTo(this.GetCancellationTokenOnDestroy());
         }
 
         private void OnToggle(bool toggle)
@@ -35,9 +35,9 @@ namespace VLive.Runtime.Presenters
             _textComp.text = toggle ? onText : offText;
         }
 
-        private void OnButtonClicked(Unit _)
+        private void OnButtonClicked(AsyncUnit _)
         {
-            Toggle.Trigger();
+            Toggle.Toggle();
         }
     }
 

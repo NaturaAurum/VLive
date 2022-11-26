@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using VLive.Runtime.Models;
 using VLive.Runtime.Utilities;
@@ -35,10 +37,10 @@ namespace VLive.Runtime.MediaPipe
         private const float Frequency = 90f;
 
         private bool _isFilterInitialized = false;
-        
+
         public void Draw(PoseData pose, FaceData face, HandsData hand)
         {
-            if (!PointToggle.Toggle.Value)
+            if (!PointToggle.Value)
             {
                 return;
             }

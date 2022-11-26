@@ -1,19 +1,25 @@
-using UniRx;
+using System;
 namespace VLive.Runtime.Models
 {
     public class ToggleModel
     {
-        public IReadOnlyReactiveProperty<bool> Toggle => _toggleRx;
-        private readonly BoolReactiveProperty _toggleRx;
+        public bool Value { get; private set; }
+        private readonly AsyncMessageBroker<bool> _toggleRx;
 
         public ToggleModel()
         {
-            _toggleRx = new BoolReactiveProperty(false);
+            _toggleRx = new AsyncMessageBroker<bool>();
         }
 
-        public void Trigger()
+        public void Toggle()
         {
-            _toggleRx.Value = !_toggleRx.Value;
+            Value = !Value;
+            _toggleRx.Publish(Value);
+        }
+
+        public IDisposable Subscribe(Action<bool> onNext)
+        {
+            return _toggleRx.Subscribe(onNext);
         }
     }
 }
