@@ -203,17 +203,20 @@ namespace VLive.Runtime.MediaPipe
             var mouthY = FaceBlendShape.MouthClose.RemapBlendShape(mouthOpenDist);
             var mouthX = FaceBlendShape.MouthStretch.RemapBlendShape(mouthWidth);
 
-            var ratioI = Mathf.Clamp01(mouthX.Remap(0, 1) * 2 * mouthY.Remap(0.2f, 0.7f));
-            var ratioA = mouthY * 0.4f + mouthY * (1 - ratioI) * 0.6f;
-            var ratioU = mouthY * (1-ratioI).Remap(0, 0.3f) * 0.1f;
-            var ratioE = ratioU.Remap(0.2f, 1) * (1 - ratioI) * 0.3f;
-            var ratioO = (1-ratioI) * mouthY.Remap(0.3f, 1f) * 0.4f;
+            // var ratioI = Mathf.Clamp01(mouthX.Remap(0, 1) * 2 * mouthY.Remap(0.2f, 0.7f));
+            // var ratioA = mouthY * 0.4f + mouthY * (1 - ratioI) * 0.6f;
+            // var ratioU = mouthY * (1-ratioI).Remap(0, 0.3f) * 0.1f;
+            // var ratioE = ratioU.Remap(0.2f, 1) * (1 - ratioI) * 0.3f;
+            // var ratioO = (1-ratioI) * mouthY.Remap(0.3f, 1f) * 0.4f;
+
+            var ratioA = mouthY <= 0.7f ? mouthY : 0f;
+            var ratioO = mouthY >= 0.7f ? mouthY.Remap(0.7f, 1f) : 0f;
 
             _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.A), ratioA);
-            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.E), ratioE);
-            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.I), ratioI);
+            // _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.E), ratioE);
+            // _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.I), ratioI);
             _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.O), ratioO);
-            _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.U), ratioU);
+            // _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.U), ratioU);
             // if (_isPerfectSync)
             // {
             //     PerfectMouthSolve(data);
@@ -412,7 +415,7 @@ namespace VLive.Runtime.MediaPipe
             var innerBrow = data.PosList[CanonicalPoints.InnerBrow].Point;
             var upperNose = data.PosList[CanonicalPoints.UpperNose].Point;
             var innerBrowDist = Vector3.Distance(upperNose, innerBrow);
-            Debug.Log($"[BlendShapeValues] Inner Brow Dist : ${innerBrowDist}");
+            // Debug.Log($"[BlendShapeValues] Inner Brow Dist : ${innerBrowDist}");
             var innerBrowRemap = FaceBlendShape.BrowInnerUp.RemapBlendShape(innerBrowDist);
             LogShapeValue(FaceBlendShape.BrowInnerUp, innerBrowRemap);
             _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateUnknown(BrowName), innerBrowRemap);
@@ -421,7 +424,7 @@ namespace VLive.Runtime.MediaPipe
         private float GetEyeOpenRation(FaceData data, int[] eyePoints)
         {
             var eyeDis = GetEyeLidDis(data, eyePoints);
-            Debug.Log($"[BlendShapeValues] eye dis : ${eyeDis}");
+            // Debug.Log($"[BlendShapeValues] eye dis : ${eyeDis}");
             const float maxRatio = 0.285f;
             return Mathf.Clamp(eyeDis / maxRatio, 0, 2);
         }
