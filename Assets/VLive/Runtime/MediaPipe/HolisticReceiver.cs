@@ -1,5 +1,6 @@
 using System;
 using Sirenix.OdinInspector;
+using UniGLTF;
 using UnityEngine;
 namespace VLive.Runtime.MediaPipe
 {
@@ -8,37 +9,18 @@ namespace VLive.Runtime.MediaPipe
         private IPoseSolver _poseSolver;
         private IFaceSolver _faceSolver;
         private IHandsSolver _handsSolver;
+        private GameObject _currModel;
 
-        [SerializeField]
-        private GameObject[] models;
-
-        private int _currIndex = 0;
-
-        [Button]
-        public void ChangeModel(int index)
+        public void SetModel(GameObject model)
         {
-            if (index >= models.Length)
+            if (_currModel != null)
             {
-                return;
+                Destroy(_currModel);
             }
-            
-            models[_currIndex].SetActive(false);
-            var model = models[index];
-            model.SetActive(true);
-            _poseSolver = model.GetComponent<IPoseSolver>();
-            _faceSolver = model.GetComponent<IFaceSolver>();
-            _handsSolver = model.GetComponent<IHandsSolver>();
-
-            _currIndex = index;
-        }
-
-        private void Start()
-        {
-            foreach (var model in models)
-            {
-                model.SetActive(false);
-            }
-            ChangeModel(0);
+            _poseSolver = model.GetOrAddComponent<PoseSolver>();
+            _faceSolver = model.GetOrAddComponent<FaceSolver>();
+            _handsSolver = model.GetOrAddComponent<HandsSolver>();
+            _currModel = model;
         }
 
         public void SolvePose(PoseData poseData)

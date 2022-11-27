@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.Linq;
 using Mediapipe;
@@ -59,6 +60,8 @@ namespace VLive.Runtime.MediaPipe
         private ImageSource ImageSource => ImageSourceProvider.ImageSource;
 
         private ToggleModel PointToggle => StaticModels.Instance.PointToggle;
+
+        private bool _prepared;
         
         private void Awake()
         {
@@ -70,7 +73,20 @@ namespace VLive.Runtime.MediaPipe
                 .Subscribe(OnLateUpdate)
                 .AddTo(this.GetCancellationTokenOnDestroy());
         }
-        
+
+        private void Start()
+        {
+            Toggle(false);
+            StartAsync().Forget();
+        }
+
+        private async UniTaskVoid StartAsync()
+        {
+            await InitSettingsAsync();
+            await InitBeforeRunAsync();
+            PointToggle.Subscribe(Toggle).AddTo(this.GetCancellationTokenOnDestroy());
+        }
+
         private void OnLateUpdate(AsyncUnit _)
         {
             var poseVisible = _poseLandmarks.IsValid() && _poseWorldLandmarks.IsValid();
@@ -161,20 +177,49 @@ namespace VLive.Runtime.MediaPipe
             landmarkDrawer.Draw(_poseData, _faceData, _handsData);
         }
 
-        private IEnumerator Start()
-        {
-            yield return InitSettings();
-            Toggle(false);
-            PointToggle.Subscribe(Toggle).AddTo(this.GetCancellationTokenOnDestroy());
-            yield return Run();
-        }
+        // private IEnumerator Start()
+        // {
+        //     yield return InitSettings();
+        //     Toggle(false);
+        //     PointToggle.Subscribe(Toggle).AddTo(this.GetCancellationTokenOnDestroy());
+        //     yield return Run();
+        // }
 
         private void Toggle(bool toggle)
         {
             holisticAnnotationController.gameObject.SetActive(toggle);
         }
         
-        private IEnumerator InitSettings()
+        // private IEnumerator InitSettings()
+        // {
+        //     Logger.SetLogger(new MemoizedLogger(100));
+        //     Logger.MinLogLevel = Logger.LogLevel.Debug;
+        //     Protobuf.SetLogHandler(Protobuf.DefaultLogHandler);
+        //     GlobalConfigManager.SetFlags();
+        //     if (EnableGLog)
+        //     {
+        //         if (Glog.LogDir != null)
+        //         {
+        //             if (!Directory.Exists(Glog.LogDir))
+        //             {
+        //                 Directory.CreateDirectory(Glog.LogDir);
+        //             }
+        //             Logger.LogVerbose(nameof(HolisticController), $"Glog will output files under {Glog.LogDir}");
+        //         }
+        //         Glog.Initialize("MediaPipeUnityPlugin");
+        //         _gLogInitialized = true;
+        //     }
+        //     AssetLoader.Provide(new StreamingAssetsResourceManager());
+        //
+        //     DecideInferenceMode();
+        //     if (InferenceMode == InferenceMode.GPU)
+        //     {
+        //         yield return GpuManager.Initialize();
+        //     }
+        //     ImageSourceProvider.ImageSource = GetImageSource();
+        // }
+
+        private async UniTask InitSettingsAsync()
         {
             Logger.SetLogger(new MemoizedLogger(100));
             Logger.MinLogLevel = Logger.LogLevel.Debug;
@@ -198,7 +243,7 @@ namespace VLive.Runtime.MediaPipe
             DecideInferenceMode();
             if (InferenceMode == InferenceMode.GPU)
             {
-                yield return GpuManager.Initialize();
+                await GpuManager.Initialize();
             }
             ImageSourceProvider.ImageSource = GetImageSource();
         }
@@ -219,8 +264,50 @@ namespace VLive.Runtime.MediaPipe
                     return null;
             }
         }
+
+        private async UniTask InitBeforeRunAsync()
+        {
+            var graphInitReq = _holisticGraphRunner.WaitForInit(RunningMode);
+            await ImageSource.Play();
+            if (!ImageSource.isPrepared)
+            {
+                throw new Exception("ImageSource Prepare Failed");
+            }
+
+            _textureFramePool.ResizeTexture(ImageSource.textureWidth, ImageSource.textureHeight, TextureFormat.RGBA32);
+            screen.Initialize(ImageSource);
+            await graphInitReq;
+
+            if (graphInitReq.isError)
+            {
+                throw new Exception("graph Init failed");
+            }
+            AddGraphListener();
+            _prepared = true;
+        }
+
+        public void Run()
+        {
+            RunAsync(this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
+        private async UniTaskVoid RunAsync(CancellationToken token)
+        {
+            _holisticGraphRunner.StartRun(ImageSource);
+            while (true)
+            {
+                if (!_textureFramePool.TryGetTextureFrame(out var textureFrame))
+                {
+                    await UniTask.NextFrame(token);
+                    continue;
+                }
+                ReadFromImageSource(textureFrame);
+                _holisticGraphRunner.AddTextureFrameToInputStream(textureFrame);
+                await UniTask.NextFrame(token);
+            }
+        }
         
-        private IEnumerator Run()
+        private IEnumerator __Run()
         {
             // var cancellationToken = CancellationTokenSource.CreateLinkedTokenSource(_destroyToken, _runCts.Token).Token;
             var graphInitReq = _holisticGraphRunner.WaitForInit(RunningMode);
