@@ -248,6 +248,7 @@ namespace Mediapipe.Unity
     private void InitializeWebCamTexture()
     {
       Stop();
+      SelectResolution(availableResolutions.Length - 1);
       if (webCamDevice is WebCamDevice valueOfWebCamDevice)
       {
         webCamTexture = new WebCamTexture(valueOfWebCamDevice.name, resolution.width, resolution.height, (int)resolution.frameRate);
