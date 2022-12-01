@@ -111,7 +111,7 @@ namespace VLive.Runtime.MediaPipe
                     point2D.z = point3D.z;
                     // point2D.y = -point2D.y;
                     // point2D.y += 5.7f;
-                    point2D.x += 2.4f;
+                    // point2D.x += 2.4f;
                     point.Point = point2D;
                     return point;
                 }).ToList();

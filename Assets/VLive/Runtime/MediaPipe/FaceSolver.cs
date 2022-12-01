@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -76,8 +77,10 @@ namespace VLive.Runtime.MediaPipe
     {
         private struct CanonicalPoints
         {
-            public static int[] EyeRight = {33, 133, 160, 159, 158, 144, 145, 153};
-            public static int[] EyeLeft = {263, 362, 387, 386, 385, 373, 374, 380};
+            public static int[] EyeRight = {263, 362, 387, 386, 385, 373, 374, 380};
+            public static int[] EyeLeft = {130, 133, 160, 159, 158, 144, 145, 153};
+            public static int[] PupilLeft = {468, 469, 470, 471, 472};
+            public static int[] PupilRight = {473, 474, 475, 476, 477};
             public static int[] Head = {10, 152};
             public const int NoseTip = 1;
             public const int UpperLip = 13;
@@ -111,6 +114,8 @@ namespace VLive.Runtime.MediaPipe
         }
 
         private VRMBlendShapeProxy _blendShapeProxy;
+        private VRMLookAtHead _lookAt;
+        private Vector3 _lookAtInitPos;
 
         private bool _isPerfectSync = false;
         
@@ -132,6 +137,7 @@ namespace VLive.Runtime.MediaPipe
         private void Awake()
         {
             _blendShapeProxy = GetComponent<VRMBlendShapeProxy>();
+            _lookAt = GetComponent<VRMLookAtHead>();
 
             var blendShapeAvatar = _blendShapeProxy.BlendShapeAvatar;
             // 대충 52개 이상이면 있는걸로
@@ -139,6 +145,11 @@ namespace VLive.Runtime.MediaPipe
 
             _animator = GetComponent<Animator>();
             _head = _animator.GetBoneTransform(HumanBodyBones.Head);
+        }
+
+        private void Start()
+        {
+            _lookAtInitPos = _lookAt.Target.position;
         }
 
         public void Solve(FaceData data)
@@ -406,8 +417,8 @@ namespace VLive.Runtime.MediaPipe
 
             var blinkLeft = 1 - FaceBlendShape.EyeBlinkLeft.RemapBlendShape(eyeOpenRatioLeft);
             var blinkRight = 1 - FaceBlendShape.EyeBlinkRight.RemapBlendShape(eyeOpenRatioRight);
-            LogShapeValue(FaceBlendShape.EyeBlinkLeft, eyeOpenRatioLeft);
-            LogShapeValue(FaceBlendShape.EyeBlinkRight, eyeOpenRatioRight);
+            // LogShapeValue(FaceBlendShape.EyeBlinkLeft, eyeOpenRatioLeft);
+            // LogShapeValue(FaceBlendShape.EyeBlinkRight, eyeOpenRatioRight);
             
             _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_L), blinkLeft);
             _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateFromPreset(BlendShapePreset.Blink_R), blinkRight);
@@ -417,8 +428,19 @@ namespace VLive.Runtime.MediaPipe
             var innerBrowDist = Vector3.Distance(upperNose, innerBrow);
             // Debug.Log($"[BlendShapeValues] Inner Brow Dist : ${innerBrowDist}");
             var innerBrowRemap = FaceBlendShape.BrowInnerUp.RemapBlendShape(innerBrowDist);
-            LogShapeValue(FaceBlendShape.BrowInnerUp, innerBrowRemap);
+            // LogShapeValue(FaceBlendShape.BrowInnerUp, innerBrowRemap);
             _blendShapeProxy.ImmediatelySetValue(BlendShapeKey.CreateUnknown(BrowName), innerBrowRemap);
+
+            var leftPupilPos = GetPupilPos(data, CanonicalPoints.EyeLeft, CanonicalPoints.PupilLeft);
+            var rightPupilPos = GetPupilPos(data, CanonicalPoints.EyeRight, CanonicalPoints.PupilRight);
+            var pupilX = leftPupilPos.x + rightPupilPos.x * 0.5f;
+            var pupilY = leftPupilPos.y + rightPupilPos.y * 0.5f;
+
+            var lookAtPos = _lookAt.Target.position;
+            var headPos = _lookAt.Head.position;
+            lookAtPos.x = headPos.x + pupilX;
+            lookAtPos.y = headPos.y + pupilY;
+            _lookAt.Target.position = lookAtPos;
         }
 
         private float GetEyeOpenRation(FaceData data, int[] eyePoints)
@@ -437,6 +459,26 @@ namespace VLive.Runtime.MediaPipe
             var eyeInnerLid = Vector3.Distance(data.PosList[eyePoints[4]].Point, data.PosList[eyePoints[7]].Point);
             var eyeLidAvg = (eyeOuterLid + eyeMidLid + eyeInnerLid) / 3f;
             return eyeLidAvg / eyeWidth;
+        }
+
+        private Vector3 GetPupilPos(FaceData data, int[] eyePoints, int[] pupilPoints)
+        {
+            var outerCorner = data.PosList[eyePoints[0]].Point;
+            var innerCorner = data.PosList[eyePoints[1]].Point;
+            var width = Vector3.Distance(outerCorner, innerCorner);
+            var mid = Vector3.Lerp(outerCorner, innerCorner, 0.5f);
+
+            var pupil = data.PosList[pupilPoints[0]].Point;
+            var dx = mid.x - pupil.x;
+            var dy = mid.y - pupil.y;
+
+            // var ratioX = dx / (width / 2);
+            // var ratioY = dy / (width / 4);
+            //
+            // ratioX *= 4;
+            // ratioY *= 4;
+            // return new Vector3(ratioX, ratioY, 0);
+            return new Vector3(-dx * 7, dy * 7, 0);
         }
     }
 }

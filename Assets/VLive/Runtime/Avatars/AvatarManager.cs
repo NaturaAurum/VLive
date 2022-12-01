@@ -60,9 +60,9 @@ namespace VLive.Runtime.Avatars
         {
             avatarPanel.SetActive(false);
             var path = _info.avatarPathList[_info.selectedIndex];
-            var gltfData = new GlbFileParser(path).Parse();
+            using var gltfData = new GlbFileParser(path).Parse();
             var vrmData = new VRMData(gltfData);
-            var vrmImporterContext = new VRMImporterContext(vrmData);
+            using var vrmImporterContext = new VRMImporterContext(vrmData);
             var measure = new ImporterContextSpeedLog();
             var runtimeGltfInstance = await vrmImporterContext.LoadAsync(new ImmediateCaller(), measure.MeasureTime);
             _context = runtimeGltfInstance;
@@ -70,8 +70,36 @@ namespace VLive.Runtime.Avatars
             runtimeGltfInstance.EnableUpdateWhenOffscreen();
             runtimeGltfInstance.ShowMeshes();
 
-            _avatar.GetComponent<Animator>().runtimeAnimatorController = animatorController;
+            var animator = _avatar.GetComponent<Animator>();
+            animator.runtimeAnimatorController = animatorController;
             _avatar.transform.localRotation = Quaternion.Euler(0, 180f, 0);
+            var upperChest = animator.GetBoneTransform(HumanBodyBones.UpperChest);
+            if (upperChest)
+            {
+                var mainCam = Camera.main;
+                if (mainCam)
+                {
+                    var mainCamPos = mainCam.transform.position;
+                    var upperChestPosition = upperChest.position;
+                    var yDiff = upperChestPosition.y - mainCamPos.y;
+                    var avatarPos = _avatar.transform.position;
+                    avatarPos.y += yDiff;
+                    _avatar.transform.position = avatarPos;
+                }
+            }
+            foreach (var vrmSpringBone in _avatar.GetComponentsInChildren<VRMSpringBone>())
+            {
+                vrmSpringBone.m_updateType = VRMSpringBone.SpringBoneUpdateType.LateUpdate;
+            }
+
+            var vrmLookAtHead = _avatar.GetComponent<VRMLookAtHead>();
+            vrmLookAtHead.Head = animator.GetBoneTransform(HumanBodyBones.Head);
+            var lookAtTarget = new GameObject("LookAtTarget");
+            lookAtTarget.transform.SetParent(_avatar.transform);
+            lookAtTarget.transform.position = vrmLookAtHead.Head.position + vrmLookAtHead.Head.forward;
+            vrmLookAtHead.UpdateType = UpdateType.LateUpdate;
+            vrmLookAtHead.Target = lookAtTarget.transform;
+
             receiver.SetModel(_avatar);
             controller.Run();
         }
@@ -146,9 +174,9 @@ namespace VLive.Runtime.Avatars
                     continue;
                 }
 
-                var gltfData = new GlbFileParser(path).Parse();
+                using var gltfData = new GlbFileParser(path).Parse();
                 var vrmData = new VRMData(gltfData);
-                var vrmImporterContext = new VRMImporterContext(vrmData);
+                using var vrmImporterContext = new VRMImporterContext(vrmData);
                 var vrmMetaObject = await vrmImporterContext.ReadMetaAsync(new ImmediateCaller(), true);
                 elemInfo.Path = path;
                 elemInfo.Title = vrmMetaObject.Title;
