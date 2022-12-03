@@ -24,6 +24,11 @@ namespace VLive.Runtime.MediaPipe
         private const RunningMode RunningMode = Mediapipe.Unity.RunningMode.Sync;
 
         public InferenceMode InferenceMode { get; private set; }
+        public bool Prepared
+        {
+            get;
+            private set;
+        }
 
 
         private LandmarkList _poseWorldLandmarks;
@@ -61,8 +66,6 @@ namespace VLive.Runtime.MediaPipe
 
         private ToggleModel PointToggle => StaticModels.Instance.PointToggle;
 
-        private bool _prepared;
-        
         private void Awake()
         {
             _textureFramePool = GetComponent<TextureFramePool>();
@@ -89,6 +92,7 @@ namespace VLive.Runtime.MediaPipe
 
         private void OnLateUpdate(AsyncUnit _)
         {
+            return;
             var poseVisible = _poseLandmarks.IsValid() && _poseWorldLandmarks.IsValid();
             var modelRot = receiver.transform.rotation;
             modelRot *= Quaternion.Euler(0, 180, 0);
@@ -283,7 +287,7 @@ namespace VLive.Runtime.MediaPipe
                 throw new Exception("graph Init failed");
             }
             AddGraphListener();
-            _prepared = true;
+            Prepared = true;
         }
 
         public void Run()
@@ -306,41 +310,7 @@ namespace VLive.Runtime.MediaPipe
                 await UniTask.NextFrame(token);
             }
         }
-        
-        private IEnumerator __Run()
-        {
-            // var cancellationToken = CancellationTokenSource.CreateLinkedTokenSource(_destroyToken, _runCts.Token).Token;
-            var graphInitReq = _holisticGraphRunner.WaitForInit(RunningMode);
-            yield return ImageSource.Play();
-            if (!ImageSource.isPrepared)
-            {
-                yield break;
-            }
 
-            _textureFramePool.ResizeTexture(ImageSource.textureWidth, ImageSource.textureHeight, TextureFormat.RGBA32);
-            screen.Initialize(ImageSource);
-            yield return graphInitReq;
-
-            if (graphInitReq.isError)
-            {
-                yield break;
-            }
-            AddGraphListener();
-            _holisticGraphRunner.StartRun(ImageSource);
-            // maskAnnotationController.InitScreen(ImageSource.textureWidth, ImageSource.textureHeight);
-            while (true)
-            {
-                if (!_textureFramePool.TryGetTextureFrame(out var textureFrame))
-                {
-                    yield return new WaitForEndOfFrame();
-                    continue;
-                }
-                ReadFromImageSource(textureFrame);
-                _holisticGraphRunner.AddTextureFrameToInputStream(textureFrame);
-                yield return new WaitForEndOfFrame();
-            }
-        }
-        
         private void AddGraphListener()
         {
             _holisticGraphRunner.OnFaceLandmarksOutput += OnFaceLandmarks;

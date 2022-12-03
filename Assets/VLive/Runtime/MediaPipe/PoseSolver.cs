@@ -36,6 +36,11 @@ namespace VLive.Runtime.MediaPipe
             SetRotationInfo();
         }
 
+        private void Start()
+        {
+            SetInitLocalRotation();
+        }
+
         private void InitJointPointDict()
         {
             foreach (JointIndex jointIndex in Enum.GetValues(typeof(JointIndex)))
@@ -86,6 +91,14 @@ namespace VLive.Runtime.MediaPipe
             _jointPointDict[JointIndex.Neck.Int()].Child = _jointPointDict[JointIndex.Head.Int()];
         }
 
+        private void SetInitLocalRotation()
+        {
+            foreach (var jointPoint in _jointPointDict.Values.Where(jointPoint => jointPoint.Transform != null))
+            {
+                jointPoint.InitLocalRotation = jointPoint.Transform.localRotation;
+            }
+        }
+
         private void SetRotationInfo()
         {
             var forward = TriangleNormal(_jointPointDict[JointIndex.Hip.Int()].Transform.position,
@@ -98,7 +111,7 @@ namespace VLive.Runtime.MediaPipe
             foreach (var jointPoint in _jointPointDict.Values.Where(jointPoint => jointPoint.Transform != null))
             {
                 jointPoint.InitRotation = jointPoint.Transform.rotation;
-                jointPoint.InitLocalRotation = jointPoint.Transform.localRotation;
+                
                 var currPos = jointPoint.Transform.position;
 
                 if (jointPoint.Parent != null && jointPoint.Parent.Transform != null &&
@@ -202,6 +215,20 @@ namespace VLive.Runtime.MediaPipe
         private Vector3 Dir(int id1, int id2)
         {
             return _jointPointDict[id1].Pos3D - _jointPointDict[id2].Pos3D;
+        }
+
+        private void Init(params JointIndex[] indices)
+        {
+            foreach (var jointIndex in indices)
+            {
+                Init(jointIndex.Int());
+            }
+        }
+
+        private void Init(int id)
+        {
+            var curr = _jointPointDict[id];
+            curr.Transform.localRotation = curr.InitLocalRotation;
         }
 
         private void LookAt(JointIndex index, JointIndex childIndex, Vector3 upWords) =>
@@ -365,11 +392,12 @@ namespace VLive.Runtime.MediaPipe
 
                 // LookAt(hand, mid, normal);
             }
-            // else
-            // {
-            //     LookAt(upper, lower, forward);
-            //     LookAt(lower, hand, forward);
-            // }
+            else
+            {
+                // LookAt(upper, lower, forward);
+                // LookAt(lower, hand, forward);
+                Init(upper, lower, hand);
+            }
         }
 
         private void UpdateLegJoints(JointIndex thigh, JointIndex shin, JointIndex foot, JointIndex toe,

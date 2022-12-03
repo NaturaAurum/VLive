@@ -72,18 +72,23 @@ namespace VLive.Runtime.Avatars
 
             var animator = _avatar.GetComponent<Animator>();
             animator.runtimeAnimatorController = animatorController;
+            animator.Update(0.0f);
+            animator.enabled = false;
             _avatar.transform.localRotation = Quaternion.Euler(0, 180f, 0);
-            var upperChest = animator.GetBoneTransform(HumanBodyBones.UpperChest);
-            if (upperChest)
+            var target = animator.GetBoneTransform(HumanBodyBones.Head);
+            if (target)
             {
                 var mainCam = Camera.main;
                 if (mainCam)
                 {
                     var mainCamPos = mainCam.transform.position;
-                    var upperChestPosition = upperChest.position;
-                    var yDiff = upperChestPosition.y - mainCamPos.y;
+
+                    var targetPosition = target.position;
                     var avatarPos = _avatar.transform.position;
-                    avatarPos.y += yDiff;
+
+                    var dir = targetPosition - avatarPos;
+                    var dis = dir.magnitude;
+                    avatarPos.y = mainCamPos.y - dis;
                     _avatar.transform.position = avatarPos;
                 }
             }

@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 
 using Google.Protobuf;
+using UnityEngine.Profiling.Memory.Experimental;
 
 namespace Mediapipe.Unity.Holistic
 {

@@ -5,6 +5,9 @@ namespace VLive.Runtime.Presenters
 {
     public class CanvasTogglePresenter : MonoBehaviour
     {
+        [SerializeField]
+        private GameObject background;
+        
         private void Awake()
         {
             UniTaskAsyncEnumerable.EveryUpdate().Subscribe(EveryUpdate).AddTo(this.GetCancellationTokenOnDestroy());
@@ -15,6 +18,7 @@ namespace VLive.Runtime.Presenters
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 gameObject.SetActive(!gameObject.activeSelf);
+                background.SetActive(!background.activeSelf);
             }
         }
     }
